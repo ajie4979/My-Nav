@@ -150,25 +150,43 @@ npx wrangler deploy
 ### 方式二：Cloudflare 网页部署（Git 集成，全自动，无需本地命令行）
 
 > 适合不想在本地敲命令的用户：代码已推送到 GitHub 后，全程在 Cloudflare 网页上操作，构建与部署由 Cloudflare 云端自动完成。（新版 Cloudflare 已将 Workers 与 Pages 合并统一，以下步骤按新版界面撰写。）
+>
+> ⚠️ **顺序很重要**：必须**先**建好 D1/KV 资源并复制其 ID，**再**连接 Git 创建项目——因为创建项目时就要在「高级设置」里填入这两个 ID，这样第一次部署即带绑定、一次成功，无需先失败一次再补。
 
-1. **连接 GitHub 创建项目**：Cloudflare 控制台 → `Workers 和 Pages` → `创建` → 选择「连接到 Git」→ 授权 GitHub → 选择本仓库（如 `My-Nav`）→ `开始设置`
-2. **配置部署设置**：
-   - 项目名称：默认 `my-nav`（仓库 `wrangler.toml` 中 `name = "my-nav"`，**项目名必须与之一致**，决定默认域名 `项目名.workers.dev`）
-   - 构建命令：`npm run build`（Cloudflare 会自动识别 `package.json` 中的 `build` 脚本；若未自动填入请手动填 `npm run build`，该脚本会自动完成样式编译 + functions 编译，**不能省略**，否则后台/博客/音乐接口不生效）
-   - 部署命令：`npx wrangler deploy`（保持默认）
-   - 非生产分支构建：可勾选（不影响生产）
-   - **Protect with Cloudflare Access：不要勾选**（站点级访问保护，勾选后所有访客需登录才能访问，公开站点勿开）
-   - 点击 `部署`
-3. **创建 D1 数据库**：控制台 → `存储和数据库` → `D1` → 创建数据库，名称 `book`，创建后复制 **database_id**
-4. **创建 KV 命名空间**：控制台 → `存储和数据库` → `KV` → 创建命名空间，名称 `NAV_AUTH`，创建后复制 **id**
-5. **配置构建变量（关键步骤，替代手动绑定）**：进入 Worker 项目 → `设置` → `构建（Build）` → `构建变量和机密（Build variables and secrets）`，添加两个 Text 变量：
-   - `D1_DATABASE_ID` = 步骤 3 复制的 D1 database_id
-   - `KV_NAMESPACE_ID` = 步骤 4 复制的 KV id
-   - 💡 构建时 `scripts/inject-bindings.mjs` 会自动把这两个 ID 注入 `wrangler.toml`，部署后即生成 `NAV_DB` / `NAV_AUTH` 绑定，**无需再去「绑定」页手动添加，且以后推送代码不会丢失绑定**
-6. **配置后台登录凭据**：进入 KV 命名空间 `NAV_AUTH` → `查看键` → `添加键值`，添加：
-   - 键 `admin_username` → 你的管理员用户名
-   - 键 `admin_password` → 你的管理员密码
-7. **重新部署并验证**：回到项目重新部署一次（让构建变量生效），然后访问部署域名（`项目名.workers.dev`），首次访问自动写入示例数据，`/admin` 登录后台验证。部署日志里看到 `env.NAV_DB (book) D1 Database` 与 `env.NAV_AUTH (...) KV Namespace` 即表示绑定成功
+**第一步：创建 D1 数据库（先做，拿到 ID）**
+
+控制台 → `存储和数据库` → `D1 SQL 数据库` → `创建数据库`，名称填 `book`，创建后在数据库详情页复制 **database_id**（形如 `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`），先保存到记事本。
+
+**第二步：创建 KV 命名空间并配置后台登录凭据（先做，拿到 ID）**
+
+1. 控制台 → `存储和数据库` → `Workers KV` → `创建命名空间`，名称填 `NAV_AUTH`，创建后复制其 **id**（一长串十六进制字符），同样保存
+2. 进入该命名空间 → `查看键` / `记录` → `添加记录`，依次添加两条：
+   - 键 `admin_username`，值：你的管理员用户名（如 `admin`）
+   - 键 `admin_password`，值：你的管理员密码（建议强密码）
+
+**第三步：连接 GitHub 创建项目并填写构建变量（核心）**
+
+1. 控制台 → `Workers 和 Pages` → `创建` → 点 **Continue with GitHub（连接到 Git）**→ 授权后选中本仓库（如 `My-Nav`）→ `开始设置 / 下一步`
+2. 在「设置您的应用程序」页填写：
+   - **项目名称**：`my-nav`（必须与仓库 `wrangler.toml` 中 `name = "my-nav"` 一致，决定默认域名 `my-nav.你的账号.workers.dev`）
+   - **构建命令**：`npm run build`（Cloudflare 会自动识别 `package.json` 的 build 脚本；若没自动填就手动填。该脚本自动完成「注入绑定 ID + 样式编译 + functions 编译」，**不能省略或只填 build:css**，否则后台/博客/音乐接口不生效）
+   - **部署命令**：`npx wrangler deploy`（保持默认）
+   - **Protect with Cloudflare Access：不要勾选**（勾选后所有访客需登录，公开站点勿开）
+3. **点开页面下方的「高级设置」**，向下滚过「非生产分支部署命令 / 路径 / API 令牌」，找到 **变量名称 / 变量值 / 加密** 区域，添加两个变量（**均不要勾选「加密」**，保持明文）：
+   - 第一行：变量名称 `D1_DATABASE_ID`，变量值填第一步复制的 D1 database_id
+   - 点该行右下的 **「+ 添加变量」**，第二行：变量名称 `KV_NAMESPACE_ID`，变量值填第二步复制的 KV id
+   - 💡 构建时 `scripts/inject-bindings.mjs` 会自动把这两个 ID 注入 `wrangler.toml`，部署后即生成 `NAV_DB` / `NAV_AUTH` 绑定，**无需再去「绑定」页手动添加，以后推送代码也不会丢失绑定**
+4. 确认无误后点右下蓝色 **「部署」**
+
+**第四步：验证**
+
+1. 部署完成后进入项目 → `部署 / Builds`，点开本次构建日志，看到下面两行即代表绑定成功：
+   - `[inject-bindings] D1_DATABASE_ID 已注入`、`[inject-bindings] KV_NAMESPACE_ID 已注入`
+   - `env.NAV_DB (book) D1 Database`、`env.NAV_AUTH (xxxxxxxx) KV Namespace`
+2. 访问 `https://my-nav.你的账号.workers.dev`，首页正常显示、首次访问自动写入示例数据（书签/博客/音乐）
+3. 访问 `/admin`，用第二步设置的 `admin_username` / `admin_password` 登录后台
+
+> 📌 **如果创建项目时漏填了构建变量（或删除重建了项目）**：不必重新走创建流程，进入已有 Worker 项目 → `设置（Settings）` → `构建（Build）` → `构建变量和机密`，补填上面两个变量并保存，再到 `部署 / Builds` 对失败的那次点 **「重试 / Retry」** 即可（重试会读取最新构建配置，无需重新推代码）。
 
 > 💡 **注意**：本项目的默认/主推部署方式是上方「方式一 Cloudflare Workers」。方式二为网页全自动部署（Git 集成），适合不想碰命令行的用户；项目的 `functions/` 与 `public/` 已按 Cloudflare 标准组织，云端会自动处理。若遇到问题建议回到方式一。
 
