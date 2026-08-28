@@ -24,9 +24,22 @@ ICON_API = "https://faviconsnap.com/api/favicon?url="
 AI_REQUEST_DELAY = "1500"
 
 # -----------------------------------------------------------------
-#  D1 / KV 绑定（不要在此填写个人资源 ID，请在网页添加）：
+#  D1 / KV 绑定（变量名固定，个人资源 ID 通过环境变量注入，
+#  不在公开仓库暴露；部署前在 Cloudflare 项目 → 设置 → 变量
+#  和机密 里配置两个构建时变量：
+#    D1_DATABASE_ID = 你的 D1 database_id
+#    KV_NAMESPACE_ID = 你的 KV namespace id
+#  本地开发时在系统环境变量里设置，或复制 wrangler.example.toml
+#  直接填写 ID）
 #   - NAV_DB：D1 数据库（book）
 #   - NAV_AUTH：KV 命名空间（NAV_AUTH）
-#  网页路径：Cloudflare → Workers 项目 → 设置 → 绑定 → 添加绑定
-#  注意：wrangler deploy 不会清除网页上已配置的绑定，只需配置一次
 # -----------------------------------------------------------------
+
+[[d1_databases]]
+binding = "NAV_DB"
+database_name = "book"
+database_id = "${D1_DATABASE_ID}"
+
+[[kv_namespaces]]
+binding = "NAV_AUTH"
+id = "${KV_NAMESPACE_ID}"
