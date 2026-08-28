@@ -135,7 +135,7 @@ const SEED_POSTS = [
 
 // 示例音乐（使用可直链播放的音乐解析地址，可直接播放）
 const SEED_MUSICS = [
-  { title: '自明平凡', artist: '王家豪', url: 'https://api.qijieya.cn/meting/?type=url&id=3387500987' },
+  { title: '自命平凡', artist: '王家豪', url: 'https://api.qijieya.cn/meting/?type=url&id=3387500987' },
   { title: '姑娘别哭泣', artist: '柯柯柯啊', url: 'https://api.qijieya.cn/meting/?type=url&id=2078700726' },
 ];
 
