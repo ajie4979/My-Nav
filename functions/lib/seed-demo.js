@@ -135,8 +135,8 @@ const SEED_POSTS = [
 
 // 示例音乐（使用可直链播放的音乐解析地址，可直接播放）
 const SEED_MUSICS = [
-  { title: '离别开出花', artist: '未知', url: 'https://api.qijieya.cn/meting/?type=url&id=3387500987' },
-  { title: '姑娘别哭泣', artist: '未知', url: 'https://api.qijieya.cn/meting/?type=url&id=2078700726' },
+  { title: '自明平凡', artist: '王家豪', url: 'https://api.qijieya.cn/meting/?type=url&id=3387500987' },
+  { title: '姑娘别哭泣', artist: '柯柯柯啊', url: 'https://api.qijieya.cn/meting/?type=url&id=2078700726' },
 ];
 
 // 确保 posts 表包含最新字段（兼容旧版本数据库：schema 迁移短路导致 posts 缺少 category/author 等列）
