@@ -1,0 +1,52 @@
+# =================================================================
+#  CONFIGURATION TEMPLATE FOR LOCAL DEVELOPMENT (`npm run dev`) 与 Worker 部署
+#
+#  1. Copy this file to `wrangler.toml`.
+#  2. Replace the D1/KV placeholder IDs with your own Cloudflare resources.
+#  3. Keep your real `wrangler.toml` out of Git.
+#
+#  部署方式（推荐）：Cloudflare Workers + 静态资产（main + assets）
+#  - main 指向编译后的 Pages Functions 入口（.wrangler/worker-build/index.js）
+#  - [assets].run_worker_first = true 确保所有请求先经过 Worker 渲染，
+#    否则首页会直接返回静态 index.html 模板（显示 {{SITE_NAME}} 等占位符）
+# =================================================================
+
+name = "iori-nav"
+compatibility_date = "2026-08-26"
+main = ".wrangler/worker-build/index.js"
+
+[assets]
+directory = "public"
+binding = "ASSETS"
+run_worker_first = true
+
+# [build] 可选：若修改了 public/css/tailwind.css，先执行 npm run build:css
+# [build]
+# command = "npm run build:css"
+
+[[d1_databases]]
+binding = "NAV_DB"
+database_name = "book"
+database_id = "PASTE_YOUR_D1_DATABASE_ID_HERE"
+
+[[kv_namespaces]]
+binding = "NAV_AUTH"
+id = "PASTE_YOUR_KV_NAMESPACE_ID_HERE"
+
+[vars]
+ENABLE_PUBLIC_SUBMISSION = false
+SITE_NAME = "简读记忆"
+SITE_DESCRIPTION = "一个优雅、快速、易于部署的书签收藏与博客平台"
+FOOTER_TEXT = "曾梦想仗剑走天涯"
+ICON_API = "https://faviconsnap.com/api/favicon?url="
+AI_REQUEST_DELAY = "1500"
+
+# Optional: configure both values to enable Cloudflare Turnstile locally.
+# Do not commit real secret keys.
+TURNSTILE_SITE_KEY = ""
+TURNSTILE_SECRET_KEY = ""
+
+# Optional: enable if you bind Cloudflare Workers AI for description generation.
+# [ai]
+# binding = "AI"
+# remote = false

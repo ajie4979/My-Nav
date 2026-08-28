@@ -1,0 +1,31 @@
+# =================================================================
+#  项目配置（共享版，可提交到公开仓库）
+#
+#  - main/assets/站点变量：所有部署者共用，无需改动
+#  - D1 / KV 绑定：通过 Cloudflare 网页「设置 → 绑定」添加，
+#    避免在公开仓库暴露个人资源 ID（每人绑定自己账户的资源）
+# =================================================================
+
+name = "my-nav"
+compatibility_date = "2026-08-26"
+main = ".wrangler/worker-build/index.js"
+
+[assets]
+directory = "public"
+binding = "ASSETS"
+run_worker_first = true
+
+[vars]
+ENABLE_PUBLIC_SUBMISSION = false
+SITE_NAME = "简读记忆"
+SITE_DESCRIPTION = "一个优雅、快速、易于部署的书签收藏与博客平台"
+FOOTER_TEXT = "曾梦想仗剑走天涯"
+ICON_API = "https://faviconsnap.com/api/favicon?url="
+AI_REQUEST_DELAY = "1500"
+
+# -----------------------------------------------------------------
+#  D1 / KV 绑定（不要在此填写个人资源 ID，请在网页添加）：
+#   - NAV_DB：D1 数据库（book）
+#   - NAV_AUTH：KV 命名空间（NAV_AUTH）
+#  网页路径：Cloudflare → Workers 项目 → 设置 → 绑定 → 添加绑定
+# -----------------------------------------------------------------

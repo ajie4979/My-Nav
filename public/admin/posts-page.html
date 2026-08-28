@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>文章管理 - 后台</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/admin-layout.css" />
+  <link rel="stylesheet" href="/css/admin-forms.css" />
+  <link rel="stylesheet" href="/css/admin-feedback.css" />
+  <link rel="stylesheet" href="/css/tailwind.min.css">
+  <style>
+    .post-row:hover { background-color: #f9fafb; }
+    .dark .post-row:hover { background-color: #374151; }
+    .editor-textarea { min-height: 400px; font-family: 'Consolas', 'Monaco', monospace; font-size: 14px; line-height: 1.6; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+    .modal-overlay.hidden { display: none !important; }
+    .modal-box { background: white; border-radius: 12px; width: 100%; max-width: 900px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    .dark .modal-box { background: #1f2937; }
+  </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 min-h-screen">
+  <div class="container max-w-6xl mx-auto px-4 py-8">
+    <!-- 头部 -->
+    <header class="flex items-center justify-between mb-8">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">文章管理</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">管理博客文章，支持 Markdown 格式</p>
+      </div>
+      <div class="flex items-center space-x-3">
+        <a href="/admin" class="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-sm">
+          返回书签管理
+        </a>
+        <a href="/blog" target="_blank" class="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-sm">
+          查看博客
+        </a>
+        <button id="newPostBtn" class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors text-sm font-medium flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          新建文章
+        </button>
+      </div>
+    </header>
+
+    <!-- 筛选和搜索 -->
+    <div class="flex flex-wrap items-center gap-3 mb-6">
+      <select id="statusFilter" class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400">
+        <option value="">全部状态</option>
+        <option value="published">已发布</option>
+        <option value="draft">草稿</option>
+      </select>
+      <input type="text" id="searchInput" placeholder="搜索文章标题..." 
+        class="flex-1 min-w-[200px] px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400">
+      <button id="refreshBtn" class="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-sm">
+        刷新
+      </button>
+    </div>
+
+    <!-- 文章列表 -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <table class="w-full">
+        <thead class="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
+          <tr>
+            <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">标题</th>
+            <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">状态</th>
+            <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-20">浏览</th>
+            <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-32">创建时间</th>
+            <th class="text-right px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-32">操作</th>
+          </tr>
+        </thead>
+        <tbody id="postsTableBody" class="divide-y divide-gray-200 dark:divide-gray-700">
+          <tr>
+            <td colspan="5" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+              <div class="inline-block animate-spin rounded-full h-6 w-6 border-2 border-primary-200 border-t-primary-500"></div>
+              <p class="mt-2 text-sm">加载中...</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 分页 -->
+    <div id="pagination" class="flex items-center justify-center space-x-2 mt-6">
+      <button id="prevPage" class="px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-sm hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">上一页</button>
+      <span id="pageInfo" class="text-sm text-gray-600 dark:text-gray-300"></span>
+      <button id="nextPage" class="px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-sm hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">下一页</button>
+    </div>
+  </div>
+
+  <!-- 编辑模态框 -->
+  <div id="editModal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        <h2 id="modalTitle" class="text-lg font-semibold text-gray-800 dark:text-gray-100">新建文章</h2>
+        <button id="closeModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <form id="postForm" class="p-6 space-y-4">
+        <input type="hidden" id="postId">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">标题 *</label>
+          <input type="text" id="postTitle" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-400">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Slug（可选）</label>
+            <input type="text" id="postSlug" placeholder="留空自动生成" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-400">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">状态</label>
+            <select id="postStatus" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-400">
+              <option value="draft">草稿</option>
+              <option value="published">已发布</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">封面图 URL（可选）</label>
+          <input type="url" id="postCover" placeholder="https://..." class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-400">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">分类</label>
+          <select id="postCategory" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-400">
+            <option value="技术分享">技术分享</option>
+            <option value="生活随笔">生活随笔</option>
+            <option value="资源推荐">资源推荐</option>
+            <option value="其他">其他</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">摘要（可选，留空自动截取）</label>
+          <textarea id="postSummary" rows="2" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-400"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            正文（Markdown） *
+            <span class="text-xs text-gray-400 ml-2">支持 Markdown 语法</span>
+          </label>
+          <textarea id="postContent" required class="editor-textarea w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-400"></textarea>
+        </div>
+        <div class="flex items-center">
+          <label class="flex items-center cursor-pointer">
+            <input type="checkbox" id="postPrivate" class="w-4 h-4 text-primary-500 border-gray-300 rounded focus:ring-primary-400">
+            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">私密文章（仅管理员可见）</span>
+          </label>
+        </div>
+        <div id="formMessage" class="hidden rounded-lg px-4 py-3 text-sm"></div>
+        <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <button type="button" id="cancelBtn" class="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-sm">取消</button>
+          <button type="submit" id="saveBtn" class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors text-sm font-medium">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 删除确认模态框 -->
+  <div id="deleteModal" class="modal-overlay hidden">
+    <div class="modal-box" style="max-width: 400px;">
+      <div class="p-6">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">确认删除</h3>
+        <p class="text-sm text-gray-600 dark:text-gray-300 mb-6">确定要删除这篇文章吗？此操作无法撤销。</p>
+        <div class="flex justify-end space-x-3">
+          <button id="cancelDelete" class="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-sm">取消</button>
+          <button id="confirmDelete" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium">删除</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/admin-shared.js"></script>
+  <script src="/js/admin-cache.js"></script>
+  <script>
+    // 获取 CSRF token（从服务端注入的 meta 标签读取）
+    function getCsrfToken() {
+      const meta = document.querySelector('meta[name="csrf-token"]');
+      return meta ? meta.content : '';
+    }
+
+    // 状态
+    let currentPage = 1;
+    const pageSize = 20;
+    let totalPages = 1;
+    let deleteTargetId = null;
+    let searchTimer = null;
+
+    const postsTableBody = document.getElementById('postsTableBody');
+    const pagination = document.getElementById('pagination');
+    const pageInfo = document.getElementById('pageInfo');
+    const prevBtn = document.getElementById('prevPage');
+    const nextBtn = document.getElementById('nextPage');
+    const editModal = document.getElementById('editModal');
+    const deleteModal = document.getElementById('deleteModal');
+    const postForm = document.getElementById('postForm');
+    const formMessage = document.getElementById('formMessage');
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const d = new Date(dateStr);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    function showMessage(element, message, type) {
+      element.textContent = message;
+      element.className = `rounded-lg px-4 py-3 text-sm ${type === 'error' ? 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300' : 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300'}`;
+      element.classList.remove('hidden');
+    }
+
+    function renderPosts(posts) {
+      if (!posts || posts.length === 0) {
+        postsTableBody.innerHTML = `
+          <tr>
+            <td colspan="5" class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+              <p class="text-sm">暂无文章</p>
+            </td>
+          </tr>`;
+        pagination.classList.add('hidden');
+        return;
+      }
+
+      postsTableBody.innerHTML = posts.map(post => `
+        <tr class="post-row transition-colors">
+          <td class="px-6 py-4">
+            <div class="text-sm font-medium text-gray-800 dark:text-gray-100">${escapeHtml(post.title)}</div>
+            ${post.summary ? `<div class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate max-w-md">${escapeHtml(post.summary)}</div>` : ''}
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            ${post.status === 'published' 
+              ? '<span class="inline-block px-2 py-0.5 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded text-xs">已发布</span>'
+              : '<span class="inline-block px-2 py-0.5 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 rounded text-xs">草稿</span>'}
+            ${post.is_private === 1 ? '<span class="ml-1 inline-block px-2 py-0.5 bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded text-xs">私密</span>' : ''}
+          </td>
+          <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">${post.view_count || 0}</td>
+          <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">${formatDate(post.create_time)}</td>
+          <td class="px-6 py-4 text-right">
+            <div class="flex items-center justify-end space-x-2">
+              <a href="/blog/post.html?id=${post.id}" target="_blank" class="text-gray-400 hover:text-primary-500 transition-colors" style="background: none; border: none; padding: 4px;" title="查看">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              </a>
+              <button class="edit-btn transition-colors" style="color: #9ca3af; background: none; border: none; padding: 4px;" onmouseover="this.style.color='#3b82f6'" onmouseout="this.style.color='#9ca3af'" data-id="${post.id}" title="编辑">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+              <button class="delete-btn transition-colors" style="color: #9ca3af; background: none; border: none; padding: 4px;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#9ca3af'" data-id="${post.id}" title="删除">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+
+      // 绑定事件
+      postsTableBody.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', () => editPost(btn.dataset.id));
+      });
+      postsTableBody.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          deleteTargetId = btn.dataset.id;
+          deleteModal.classList.remove('hidden');
+        });
+      });
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    async function loadPosts() {
+      postsTableBody.innerHTML = `
+        <tr>
+          <td colspan="5" class="px-6 py-12 text-center">
+            <div class="inline-block animate-spin rounded-full h-6 w-6 border-2 border-primary-200 border-t-primary-500"></div>
+          </td>
+        </tr>`;
+
+      try {
+        const params = new URLSearchParams({
+          page: currentPage,
+          pageSize: pageSize
+        });
+        const status = document.getElementById('statusFilter').value;
+        const keyword = document.getElementById('searchInput').value.trim();
+        if (status) params.set('status', status);
+        if (keyword) params.set('keyword', keyword);
+
+        const res = await fetch(`/api/posts?${params.toString()}`);
+        const data = await res.json();
+
+        if (data.code === 200) {
+          renderPosts(data.data);
+          totalPages = Math.ceil(data.total / pageSize);
+          
+          if (totalPages > 1) {
+            pagination.classList.remove('hidden');
+            pagination.classList.add('flex');
+            pageInfo.textContent = `${currentPage} / ${totalPages}`;
+            prevBtn.disabled = currentPage <= 1;
+            nextBtn.disabled = currentPage >= totalPages;
+          } else {
+            pagination.classList.add('hidden');
+          }
+        } else {
+          postsTableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-12 text-center text-red-500 text-sm">${data.message || '加载失败'}</td></tr>`;
+        }
+      } catch (e) {
+        postsTableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-12 text-center text-red-500 text-sm">加载失败：${e.message}</td></tr>`;
+        console.error('Load posts failed:', e);
+      }
+    }
+
+    function openNewPost() {
+      document.getElementById('modalTitle').textContent = '新建文章';
+      document.getElementById('postId').value = '';
+      postForm.reset();
+      document.getElementById('postStatus').value = 'draft';
+      formMessage.classList.add('hidden');
+      editModal.classList.remove('hidden');
+    }
+
+    async function editPost(id) {
+      try {
+        const res = await fetch(`/api/posts/${id}`);
+        const data = await res.json();
+        if (data.code !== 200) {
+          alert('加载文章失败：' + (data.message || '未知错误'));
+          return;
+        }
+        const post = data.data;
+        document.getElementById('modalTitle').textContent = '编辑文章';
+        document.getElementById('postId').value = post.id;
+        document.getElementById('postTitle').value = post.title;
+        document.getElementById('postSlug').value = post.slug || '';
+        document.getElementById('postStatus').value = post.status;
+        document.getElementById('postCover').value = post.cover_image || '';
+        document.getElementById('postSummary').value = post.summary || '';
+        document.getElementById('postContent').value = post.content;
+        document.getElementById('postPrivate').checked = post.is_private === 1;
+        document.getElementById('postCategory').value = post.category || '其他';
+        formMessage.classList.add('hidden');
+        editModal.classList.remove('hidden');
+      } catch (e) {
+        alert('加载文章失败：' + e.message);
+      }
+    }
+
+    async function savePost(e) {
+      e.preventDefault();
+      const id = document.getElementById('postId').value;
+      const payload = {
+        title: document.getElementById('postTitle').value,
+        slug: document.getElementById('postSlug').value,
+        status: document.getElementById('postStatus').value,
+        category: document.getElementById('postCategory').value,
+        cover_image: document.getElementById('postCover').value,
+        summary: document.getElementById('postSummary').value,
+        content: document.getElementById('postContent').value,
+        is_private: document.getElementById('postPrivate').checked ? 1 : 0
+      };
+
+      const saveBtn = document.getElementById('saveBtn');
+      saveBtn.disabled = true;
+      saveBtn.textContent = '保存中...';
+
+      try {
+        const csrfToken = getCsrfToken();
+        const url = id ? `/api/posts/${id}` : '/api/posts';
+        const method = id ? 'PUT' : 'POST';
+        
+        const headers = { 'Content-Type': 'application/json' };
+        if (csrfToken) headers['X-CSRF-Token'] = csrfToken;
+
+        const res = await fetch(url, {
+          method,
+          headers,
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (data.code === 200) {
+          showMessage(formMessage, '保存成功！', 'success');
+          setTimeout(() => {
+            editModal.classList.add('hidden');
+            loadPosts();
+          }, 800);
+        } else {
+          showMessage(formMessage, '保存失败：' + (data.message || '未知错误'), 'error');
+        }
+      } catch (e) {
+        showMessage(formMessage, '保存失败：' + e.message, 'error');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = '保存';
+      }
+    }
+
+    async function deletePost() {
+      if (!deleteTargetId) return;
+      try {
+        const csrfToken = getCsrfToken();
+        const headers = {};
+        if (csrfToken) headers['X-CSRF-Token'] = csrfToken;
+
+        const res = await fetch(`/api/posts/${deleteTargetId}`, {
+          method: 'DELETE',
+          headers
+        });
+        const data = await res.json();
+        
+        deleteModal.classList.add('hidden');
+        if (data.code === 200) {
+          loadPosts();
+        } else {
+          alert('删除失败：' + (data.message || '未知错误'));
+        }
+      } catch (e) {
+        deleteModal.classList.add('hidden');
+        alert('删除失败：' + e.message);
+      }
+      deleteTargetId = null;
+    }
+
+    // 事件绑定
+    document.getElementById('newPostBtn').addEventListener('click', openNewPost);
+    document.getElementById('closeModal').addEventListener('click', () => editModal.classList.add('hidden'));
+    document.getElementById('cancelBtn').addEventListener('click', () => editModal.classList.add('hidden'));
+    document.getElementById('cancelDelete').addEventListener('click', () => {
+      deleteModal.classList.add('hidden');
+      deleteTargetId = null;
+    });
+    document.getElementById('confirmDelete').addEventListener('click', deletePost);
+    postForm.addEventListener('submit', savePost);
+    document.getElementById('refreshBtn').addEventListener('click', loadPosts);
+    document.getElementById('statusFilter').addEventListener('change', () => {
+      currentPage = 1;
+      loadPosts();
+    });
+    document.getElementById('searchInput').addEventListener('input', () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        currentPage = 1;
+        loadPosts();
+      }, 300);
+    });
+    prevBtn.addEventListener('click', () => {
+      if (currentPage > 1) { currentPage--; loadPosts(); }
+    });
+    nextBtn.addEventListener('click', () => {
+      if (currentPage < totalPages) { currentPage++; loadPosts(); }
+    });
+
+    // 点击模态框外部关闭
+    editModal.addEventListener('click', (e) => {
+      if (e.target === editModal) editModal.classList.add('hidden');
+    });
+    deleteModal.addEventListener('click', (e) => {
+      if (e.target === deleteModal) {
+        deleteModal.classList.add('hidden');
+        deleteTargetId = null;
+      }
+    });
+
+    // 初始加载
+    loadPosts();
+  </script>
+</body>
+</html>

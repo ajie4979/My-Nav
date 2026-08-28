@@ -1,0 +1,26 @@
+# OS
+.DS_Store
+Thumbs.db
+
+node_modules/
+.wrangler/
+# wrangler.toml 为共享配置（不含个人资源 ID），需提交到仓库供 Git 集成部署使用
+
+# Husky internal files
+.husky/_
+
+# Editor
+.vscode/
+.idea/
+.trae/
+.gemini/
+.cursor/
+.codex/
+.claude/
+.kiro/
+.agent/
+.roo/
+.shared/
+.windsurf/
+*.swp
+*.swo
