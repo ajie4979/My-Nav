@@ -81,10 +81,11 @@ cd iori-nav
 # 安装依赖
 npm install
 
-# 编辑仓库自带的共享版 wrangler.toml：
-# 参照 wrangler.example.toml 的写法，在 wrangler.toml 末尾追加 [[d1_databases]] / [[kv_namespaces]] 两段，
-# 填入你自己的 D1/KV 资源 ID（见下方步骤 3/4）
-# ⚠️ 含个人 ID 的 wrangler.toml 不要提交到公开仓库
+# wrangler.toml 已内置 [[d1_databases]] / [[kv_namespaces]] 段，
+# 但资源 ID 用 ${D1_DATABASE_ID} / ${KV_NAMESPACE_ID} 占位（避免公开仓库泄露个人 ID）。
+# 本地部署二选一：
+#   A. 设置环境变量 D1_DATABASE_ID / KV_NAMESPACE_ID（推荐，见下方步骤 3/4）
+#   B. 直接把 wrangler.toml 里的两个占位符替换成你的真实 ID（⚠️ 含个人 ID 后不要提交到公开仓库）
 ```
 
 #### 步骤 2：登录 Cloudflare
@@ -99,13 +100,17 @@ npx wrangler login
 
 1. Cloudflare 控制台 → `存储和数据库` → `D1 SQL 数据库` → `创建数据库`
 2. 数据库名称输入 `book`（可自定义），创建完成后复制 **database_id**
-3. 打开 `wrangler.toml`，将 `[[d1_databases]]` 下的 `database_id` 替换为你的值
+3. 配置 ID（二选一）：
+   - 设置环境变量：`$env:D1_DATABASE_ID="你的database_id"`（PowerShell）/ `export D1_DATABASE_ID=你的database_id`（bash）
+   - 或直接打开 `wrangler.toml`，把 `${D1_DATABASE_ID}` 替换为你的真实 ID
 
 #### 步骤 4：创建 KV 命名空间并配置后台登录凭据
 
 1. Cloudflare 控制台 → `存储和数据库` → `Worker KV` → `创建命名空间`
 2. 名称输入 `NAV_AUTH`，创建完成后复制 **id**
-3. 打开 `wrangler.toml`，将 `[[kv_namespaces]]` 下的 `id` 替换为你的值
+3. 配置 ID（二选一）：
+   - 设置环境变量：`$env:KV_NAMESPACE_ID="你的id"`（PowerShell）/ `export KV_NAMESPACE_ID=你的id`（bash）
+   - 或直接打开 `wrangler.toml`，把 `${KV_NAMESPACE_ID}` 替换为你的真实 ID
 4. 进入该 KV 命名空间 → `查看键` → `添加键值`，配置后台登录凭据（两个条目）：
    - 键 `admin_username`，值：你的管理员用户名（如 `admin`）
    - 键 `admin_password`，值：你的管理员密码（建议设置强密码）
@@ -154,16 +159,16 @@ npx wrangler deploy
    - 非生产分支构建：可勾选（不影响生产）
    - **Protect with Cloudflare Access：不要勾选**（站点级访问保护，勾选后所有访客需登录才能访问，公开站点勿开）
    - 点击 `部署`
-3. **创建 D1 数据库**：控制台 → `存储和数据库` → `D1` → 创建数据库，名称 `book`
-4. **创建 KV 命名空间**：控制台 → `存储和数据库` → `KV` → 创建命名空间，名称 `NAV_AUTH`
-5. **绑定 D1 / KV**：进入 Worker 项目 → `设置` → `绑定` → `添加绑定`：
-   - 类型 D1 数据库，变量名 `NAV_DB`，选择 `book`
-   - 类型 KV 命名空间，变量名 `NAV_AUTH`，选择 `NAV_AUTH`
-   - ⚠️ 添加后确认绑定列表出现 `NAV_DB` 与 `NAV_AUTH`；若列表仍为空，触发一次「新部署」后再回来看（新版为版本化部署，绑定随部署生效）
+3. **创建 D1 数据库**：控制台 → `存储和数据库` → `D1` → 创建数据库，名称 `book`，创建后复制 **database_id**
+4. **创建 KV 命名空间**：控制台 → `存储和数据库` → `KV` → 创建命名空间，名称 `NAV_AUTH`，创建后复制 **id**
+5. **配置构建变量（关键步骤，替代手动绑定）**：进入 Worker 项目 → `设置` → `构建（Build）` → `构建变量和机密（Build variables and secrets）`，添加两个 Text 变量：
+   - `D1_DATABASE_ID` = 步骤 3 复制的 D1 database_id
+   - `KV_NAMESPACE_ID` = 步骤 4 复制的 KV id
+   - 💡 构建时 `scripts/inject-bindings.mjs` 会自动把这两个 ID 注入 `wrangler.toml`，部署后即生成 `NAV_DB` / `NAV_AUTH` 绑定，**无需再去「绑定」页手动添加，且以后推送代码不会丢失绑定**
 6. **配置后台登录凭据**：进入 KV 命名空间 `NAV_AUTH` → `查看键` → `添加键值`，添加：
    - 键 `admin_username` → 你的管理员用户名
    - 键 `admin_password` → 你的管理员密码
-7. **重新部署并验证**：绑定完成后回到项目重新部署一次，然后访问部署域名（`项目名.workers.dev`），首次访问自动写入示例数据，`/admin` 登录后台验证
+7. **重新部署并验证**：回到项目重新部署一次（让构建变量生效），然后访问部署域名（`项目名.workers.dev`），首次访问自动写入示例数据，`/admin` 登录后台验证。部署日志里看到 `env.NAV_DB (book) D1 Database` 与 `env.NAV_AUTH (...) KV Namespace` 即表示绑定成功
 
 > 💡 **注意**：本项目的默认/主推部署方式是上方「方式一 Cloudflare Workers」。方式二为网页全自动部署（Git 集成），适合不想碰命令行的用户；项目的 `functions/` 与 `public/` 已按 Cloudflare 标准组织，云端会自动处理。若遇到问题建议回到方式一。
 
@@ -171,11 +176,14 @@ npx wrangler deploy
 
 ## 🧪 本地开发
 
-> 本地开发依赖 `wrangler.toml`。仓库已提交一份**共享版 `wrangler.toml`**（含 main/assets/站点配置，不含个人资源 ID）。本地开发时需把 `wrangler.example.toml` 中的 `[[d1_databases]]` / `[[kv_namespaces]]` 段复制到 `wrangler.toml` 并填入你自己的 D1/KV ID（**不要提交含 ID 的 `wrangler.toml` 到公开仓库**）：
+> 本地开发依赖 `wrangler.toml`。仓库已提交一份**共享版 `wrangler.toml`**（含 main/assets/站点配置/绑定段，但 D1/KV 资源 ID 用 `${D1_DATABASE_ID}` / `${KV_NAMESPACE_ID}` 占位）。本地开发时设置这两个环境变量，或直接把占位符替换成你的真实 ID（**不要提交含真实 ID 的 `wrangler.toml` 到公开仓库**）：
 
 ```bash
 npm install
-# 编辑 wrangler.toml，补充 [[d1_databases]] 与 [[kv_namespaces]] 段并填入你的资源 ID
+# PowerShell：
+$env:D1_DATABASE_ID="你的D1_ID"; $env:KV_NAMESPACE_ID="你的KV_ID"
+# bash：
+export D1_DATABASE_ID=你的D1_ID KV_NAMESPACE_ID=你的KV_ID
 
 npm run dev        # 启动本地开发服务器
 ```
@@ -243,7 +251,10 @@ npm run dev        # 启动本地开发服务器
 - **首页 500 或数据为空**：确认 `NAV_DB` 已正确绑定到 `book` 数据库；首次部署后访问一次首页触发建表与示例数据初始化。
 - **博客 / 音乐 API 返回 500**：多为旧版本数据库缺少新表字段，重新部署后系统会自动补齐（`schema-migration` 会自动 ALTER 补全 posts / musics 字段）。
 - **前台看不到投稿入口**：确认 `ENABLE_PUBLIC_SUBMISSION=true`。
-- **修改了 `public/css/tailwind.css` 但样式未生效**：先执行 `npm run build:css` 再重新部署。
+- **修改了 `public/css/tailwind.css` 但样式未生效**：先执行 `npm run build:css` 再重新部署（网页 Git 部署的 `npm run build` 已自动包含此步）。
+- **部署报 `KV namespace '${KV_NAMESPACE_ID}' is not valid` 或绑定为空**：没有配置构建变量。方式二请到 `设置 → 构建 → 构建变量和机密` 添加 `D1_DATABASE_ID`、`KV_NAMESPACE_ID`（值为你自己的资源 ID），再重新部署。
+- **每次推送代码后 D1/KV 绑定就丢失**：`wrangler deploy` 会用 `wrangler.toml` 覆盖网页上手动添加的绑定。本项目已通过「构建变量 + `scripts/inject-bindings.mjs`」解决——不要在「绑定」页手动添加，改为在「构建变量」里填 ID，绑定会在每次部署时自动生成且不丢失。
+- **部署报 `entry-point file .wrangler/worker-build/index.js was not found`**：构建命令缺少 functions 编译。方式二确保构建命令为 `npm run build`（不要只用 `npm run build:css`）；方式一先执行 `npx wrangler pages functions build functions --outdir .wrangler/worker-build`。
 
 ---
 
