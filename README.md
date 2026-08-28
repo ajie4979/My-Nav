@@ -7,10 +7,10 @@
 > 🔧 **本项目由原版 [iori-nav](https://github.com/jy02739244/iori-nav) 二次开发**。在保留原版书签导航核心能力的基础上，新增了**博客**（Markdown 写作、四个固定分类、阅读统计）与**音乐播放器**（自定义歌单）两大功能，并内置示例数据、完善后台管理与部署体验，详见下文功能说明与更新日志。
 
 <p align="center">
-  <a href="https://github.com/jy02739244/iori-nav/stargazers"><img src="https://img.shields.io/github/stars/jy02739244/iori-nav?style=flat-square&logo=github&color=yellow" alt="Stars"></a>
-  <a href="https://github.com/jy02739244/iori-nav/network/members"><img src="https://img.shields.io/github/forks/jy02739244/iori-nav?style=flat-square&logo=github&color=blue" alt="Forks"></a>
-  <a href="https://github.com/jy02739244/iori-nav/blob/main/LICENSE"><img src="https://img.shields.io/github/license/jy02739244/iori-nav?style=flat-square&color=green" alt="License"></a>
-  <a href="https://github.com/jy02739244/iori-nav/issues"><img src="https://img.shields.io/github/issues/jy02739244/iori-nav?style=flat-square&color=orange" alt="Issues"></a>
+  <a href="https://github.com/ajie4979/My-Nav/stargazers"><img src="https://img.shields.io/github/stars/ajie4979/My-Nav?style=flat-square&logo=github&color=yellow" alt="Stars"></a>
+  <a href="https://github.com/ajie4979/My-Nav/network/members"><img src="https://img.shields.io/github/forks/ajie4979/My-Nav?style=flat-square&logo=github&color=blue" alt="Forks"></a>
+  <a href="https://github.com/ajie4979/My-Nav/blob/main/LICENSE"><img src="https://img.shields.io/github/license/ajie4979/My-Nav?style=flat-square&color=green" alt="License"></a>
+  <a href="https://github.com/ajie4979/My-Nav/issues"><img src="https://img.shields.io/github/issues/ajie4979/My-Nav?style=flat-square&color=orange" alt="Issues"></a>
 </p>
 
 <p align="center">
@@ -44,13 +44,9 @@
 
 ## 🖼️ 效果预览
 
-| 首页（书签导航） | 博客列表 | 音乐播放器 |
-| :---: | :---: | :---: |
-| ![首页](./image/fengge1_1.png) | ![博客](./image/fengge1_2.png) | 右上角音符按钮展开 |
-
-| 后台-文章管理 | 后台-音乐管理 | 后台-设置 |
-| :---: | :---: | :---: |
-| `/admin/posts` | `/admin/musics` | `/admin` |
+| 首页（书签导航，右上角为音乐播放器） | 博客列表 |
+| :---: | :---: |
+| <img src="./image/home.jpg" width="100%"> | <img src="./image/blog.png" width="100%"> |
 
 ---
 
