@@ -11,7 +11,7 @@
     "test": "node --no-warnings --loader ./scripts/node-extensionless-loader.mjs --test \"test/**/*.test.mjs\"",
     "version": "node scripts/update-versions.js",
     "changelog": "node scripts/update-changelog.js",
-    "build": "npm run build:css && npx wrangler pages functions build functions --outdir .wrangler/worker-build",
+    "build": "node scripts/inject-bindings.mjs && npm run build:css && npx wrangler pages functions build functions --outdir .wrangler/worker-build",
     "build:css": "npx tailwindcss -i ./public/css/tailwind.css -o ./public/css/tailwind.min.css --minify",
     "dev:css": "npx tailwindcss -i ./public/css/tailwind.css -o ./public/css/tailwind.min.css --watch"
   },
