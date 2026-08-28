@@ -149,7 +149,7 @@ npx wrangler deploy
 1. **连接 GitHub 创建项目**：Cloudflare 控制台 → `Workers 和 Pages` → `创建` → 选择「连接到 Git」→ 授权 GitHub → 选择本仓库（如 `My-Nav`）→ `开始设置`
 2. **配置部署设置**：
    - 项目名称：默认 `my-nav`（仓库 `wrangler.toml` 中 `name = "my-nav"`，**项目名必须与之一致**，决定默认域名 `项目名.workers.dev`）
-   - 构建命令：`npm install && npm run build:css && npx wrangler pages functions build functions --outdir .wrangler/worker-build`（若为空请手动填入；编译 functions 这一步**不能省略**，否则后台/博客/音乐接口不生效）
+   - 构建命令：`npm run build`（Cloudflare 会自动识别 `package.json` 中的 `build` 脚本；若未自动填入请手动填 `npm run build`，该脚本会自动完成样式编译 + functions 编译，**不能省略**，否则后台/博客/音乐接口不生效）
    - 部署命令：`npx wrangler deploy`（保持默认）
    - 非生产分支构建：可勾选（不影响生产）
    - **Protect with Cloudflare Access：不要勾选**（站点级访问保护，勾选后所有访客需登录才能访问，公开站点勿开）
