@@ -18,10 +18,10 @@
  */
 
 // 数据库 Schema 版本 - 修改此值会触发迁移
-export const SCHEMA_VERSION = 'v9';
+export const SCHEMA_VERSION = 'v10';
 
 // 上一个数据库 Schema 版本 - 仅用于首次迁移成功后 best-effort 清理旧迁移标记
-export const PREVIOUS_SCHEMA_VERSION = 'v8';
+export const PREVIOUS_SCHEMA_VERSION = 'v9';
 
 // 首页 HTML 缓存版本 - 修改此值会强制刷新首页缓存
 export const HOME_CACHE_VERSION = 'v41';

@@ -64,7 +64,6 @@ async function runIncrementalMigrations(env) {
     env.NAV_DB.prepare('CREATE INDEX IF NOT EXISTS idx_sites_catelog_id ON sites(catelog_id)'),
     env.NAV_DB.prepare('CREATE INDEX IF NOT EXISTS idx_sites_sort_order ON sites(sort_order)'),
     env.NAV_DB.prepare('CREATE INDEX IF NOT EXISTS idx_sites_private_sort ON sites(is_private, sort_order)'),
-    env.NAV_DB.prepare('CREATE INDEX IF NOT EXISTS idx_sites_star ON sites(is_star)'),
     env.NAV_DB.prepare('CREATE INDEX IF NOT EXISTS idx_sites_catelog_name ON sites(catelog_name)'),
     env.NAV_DB.prepare('CREATE INDEX IF NOT EXISTS idx_sites_url ON sites(url)')
   ]);
@@ -123,6 +122,12 @@ async function runIncrementalMigrations(env) {
     } catch (error) {
       console.warn('Schema alter skipped:', error.message);
     }
+  }
+  // is_star 列由上方 ALTER 补齐后再建索引（旧库首次升级到本版本前该列不存在，不能放进补列前的 batch）
+  try {
+    await env.NAV_DB.prepare('CREATE INDEX IF NOT EXISTS idx_sites_star ON sites(is_star)').run();
+  } catch (error) {
+    console.warn('Create idx_sites_star skipped:', error.message);
   }
 
   if (sitesMissingCatalogName) {
