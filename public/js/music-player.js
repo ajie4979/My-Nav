@@ -114,7 +114,10 @@
   }
 
   // 下一首
-  function playNext() {
+  // autoPlay=true 用于歌曲自然结束时的自动续播：浏览器会先触发 pause 事件
+  // 把 isPlaying 置为 false，再触发 ended，因此这里不能只靠 isPlaying 判断，
+  // 否则会只加载下一首却不播放（表现为播完即停、列表不循环）。
+  function playNext(autoPlay) {
     if (musicList.length === 0) return;
     if (isShuffle) {
       let next;
@@ -123,10 +126,11 @@
       } while (next === currentIndex && musicList.length > 1);
       currentIndex = next;
     } else {
+      // 取模回绕：最后一首播完回到第一首，实现列表循环；只有一首时即单曲循环
       currentIndex = (currentIndex + 1) % musicList.length;
     }
     loadCurrentMusic();
-    if (isPlaying) {
+    if (autoPlay || isPlaying) {
       musicAudio.play().catch(e => console.error('Play failed:', e));
     }
   }
@@ -204,7 +208,7 @@
   musicCloseBtn.addEventListener('click', toggleExpand);
   musicPlayBtn.addEventListener('click', togglePlay);
   musicPrevBtn.addEventListener('click', playPrev);
-  musicNextBtn.addEventListener('click', playNext);
+  musicNextBtn.addEventListener('click', () => playNext(false));
   if (musicShuffleBtn) musicShuffleBtn.addEventListener('click', toggleShuffle);
   if (musicListBtn) musicListBtn.addEventListener('click', toggleList);
 
@@ -231,8 +235,9 @@
     musicDuration.textContent = formatTime(musicAudio.duration);
   });
 
+  // 自然播放结束：自动播放下一首（autoPlay=true 强制续播，保证列表循环不中断）
   musicAudio.addEventListener('ended', () => {
-    playNext();
+    playNext(true);
   });
 
   // 进度条点击跳转
