@@ -387,6 +387,7 @@ export async function onRequestPost(context) {
         
         // Handle Privacy Logic
         let finalIsPrivate = site.is_private ? 1 : 0;
+        const finalIsStar = site.is_star ? 1 : 0;
         // Force private if category is private
         if (catIsPrivate === 1) {
             finalIsPrivate = 1;
@@ -396,16 +397,16 @@ export async function onRequestPost(context) {
             processedUrls.add(dedupKey);
             // Update
             batchStmts.push(
-                db.prepare('UPDATE sites SET name=?, logo=?, desc=?, catelog_id=?, catelog_name=?, sort_order=COALESCE(?, sort_order), is_private=?, update_time=CURRENT_TIMESTAMP WHERE url=?')
-                  .bind(sanitizedName, sanitizedLogo, sanitizedDesc, newCatId, catNameForDb, sortOrderUpdate, finalIsPrivate, existingDbUrl)
+                db.prepare('UPDATE sites SET name=?, logo=?, desc=?, catelog_id=?, catelog_name=?, sort_order=COALESCE(?, sort_order), is_private=?, is_star=?, update_time=CURRENT_TIMESTAMP WHERE url=?')
+                  .bind(sanitizedName, sanitizedLogo, sanitizedDesc, newCatId, catNameForDb, sortOrderUpdate, finalIsPrivate, finalIsStar, existingDbUrl)
             );
             itemsUpdated++;
         } else {
             processedUrls.add(dedupKey);
             // Insert
             batchStmts.push(
-                db.prepare('INSERT INTO sites (name, url, logo, desc, catelog_id, catelog_name, sort_order, is_private) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-                  .bind(sanitizedName, sanitizedUrl, sanitizedLogo, sanitizedDesc, newCatId, catNameForDb, sortOrderValue, finalIsPrivate)
+                db.prepare('INSERT INTO sites (name, url, logo, desc, catelog_id, catelog_name, sort_order, is_private, is_star) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+                  .bind(sanitizedName, sanitizedUrl, sanitizedLogo, sanitizedDesc, newCatId, catNameForDb, sortOrderValue, finalIsPrivate, finalIsStar)
             );
             itemsAdded++;
         }

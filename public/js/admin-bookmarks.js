@@ -97,6 +97,7 @@ if (addBookmarkForm) {
     const catelogId = addBookmarkCatelogSelect.value;
     const sortOrder = document.getElementById('addBookmarkSortOrder').value;
     const isPrivate = document.getElementById('addBookmarkIsPrivate').checked;
+    const isStar = document.getElementById('addBookmarkIsStar')?.checked || false;
 
     if (!name || !url || !catelogId) {
       window.showMessage('名称, URL 和分类为必填项', 'error');
@@ -113,6 +114,7 @@ if (addBookmarkForm) {
       logo: logo.trim(),
       desc: desc.trim(),
       catelogId: catelogId,
+      is_star: isStar,
       is_private: isPrivate
     };
 
@@ -185,6 +187,7 @@ if (editBookmarkForm) {
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData.entries());
     data.is_private = document.getElementById('editBookmarkIsPrivate').checked;
+    data.is_star = document.getElementById('editBookmarkIsStar')?.checked || false;
 
     // Check privacy
     const success = await checkAndUpdateCategoryPrivacy(data.catelog_id, data.is_private);

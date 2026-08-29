@@ -72,7 +72,7 @@ export async function onRequestPost(context) {
 
   try {
     const config = await request.json();
-    const { name, url, logo, desc, catelogId, sort_order, is_private } = config;
+    const { name, url, logo, desc, catelogId, sort_order, is_private, is_star } = config;
     const iconAPI = env.ICON_API || 'https://faviconsnap.com/api/favicon?url=';
 
     const nameResult = normalizeBookmarkName(name);
@@ -94,6 +94,7 @@ export async function onRequestPost(context) {
     const sanitizedDesc = descResult.value;
     const sortOrderValue = normalizeSortOrder(sort_order);
     const isPrivateValue = is_private ? 1 : 0;
+    const isStarValue = is_star ? 1 : 0;
 
     if (!catelogId) {
       return errorResponse('Catelog is required', 400);
@@ -126,9 +127,9 @@ export async function onRequestPost(context) {
     }
 
     const insert = await env.NAV_DB.prepare(`
-      INSERT INTO sites (name, url, logo, desc, catelog_id, catelog_name, sort_order, is_private)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `).bind(sanitizedName, sanitizedUrl, sanitizedLogo, sanitizedDesc, catelogId, categoryResult.catelog, sortOrderValue, finalIsPrivate).run();
+      INSERT INTO sites (name, url, logo, desc, catelog_id, catelog_name, sort_order, is_private, is_star)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(sanitizedName, sanitizedUrl, sanitizedLogo, sanitizedDesc, catelogId, categoryResult.catelog, sortOrderValue, finalIsPrivate, isStarValue).run();
 
     await markHomeCacheDirty(env, finalIsPrivate ? 'private' : 'all');
 

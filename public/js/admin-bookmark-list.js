@@ -117,6 +117,10 @@
     return `<svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 ml-1 text-amber-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" title="私密书签"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>`;
   }
 
+  function getStarIcon(config) {
+    if (!Number(config.is_star)) return '';
+    return `<svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 ml-1 text-amber-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" title="常用书签"><path d="M12 17.27l5.18 3.04-1.37-5.88 4.56-3.95-6.02-.51L12 4.36 9.65 9.97l-6.02.51 4.56 3.95-1.37 5.88z"/></svg>`;
+  }
   // 与前台一致的 favicon 自动获取服务（无 logo 时按域名生成）
   const ADMIN_ICON_API = 'https://faviconsnap.com/api/favicon?url=';
 
@@ -150,6 +154,7 @@
     const safeCatalog = window.escapeHTML(config.catelog_name || '未分类');
     const cardInitial = (safeName.charAt(0) || '站').toUpperCase();
     const privateIcon = getPrivateIcon(config);
+    const starIcon = getStarIcon(config);
     const logoHtml = getLogoHtml(config, safeName, cardInitial);
 
     card.className = 'site-card group cursor-pointer';
@@ -163,6 +168,9 @@
 
     card.innerHTML = `
       <div class="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+        <button class="star-btn p-1.5 rounded-full transition-colors shadow-sm ${Number(config.is_star) === 1 ? 'bg-amber-100 text-amber-500 hover:bg-amber-200' : 'bg-gray-50 text-gray-400 hover:bg-amber-100 hover:text-amber-500'}" title="${Number(config.is_star) === 1 ? '取消常用' : '设为常用'}" data-id="${config.id}">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27l5.18 3.04-1.37-5.88 4.56-3.95-6.02-.51L12 4.36 9.65 9.97l-6.02.51 4.56 3.95-1.37 5.88z"/></svg>
+        </button>
         <button class="edit-btn p-1.5 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition-colors shadow-sm" title="编辑" data-id="${config.id}">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -185,6 +193,7 @@
               <div class="flex items-center gap-1">
                 <h3 class="site-title truncate" title="${safeName}">${safeName}</h3>
                 ${privateIcon}
+                ${starIcon}
               </div>
               <span class="inline-flex items-center px-2 py-0.5 mt-1.5 rounded-md text-xs font-medium bg-gray-100 text-gray-600">
                 ${safeCatalog}
@@ -222,6 +231,30 @@
   }
 
   function bindActionEvents() {
+    document.querySelectorAll('.star-btn').forEach(btn => {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        const id = this.dataset.id;
+        fetch(`/api/config/${id}/star`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data.code !== 200) {
+              window.showMessage(data.message || '操作失败', 'error');
+              return;
+            }
+            const target = allConfigs.find(c => c.id == id);
+            if (target) target.is_star = data.is_star;
+            window.showMessage(data.is_star === 1 ? '已加入常用' : '已取消常用', 'success');
+            // 用更新后的本地数据重绘当前页（不重新请求，避免回到第一页）
+            renderConfig(allConfigs);
+          })
+          .catch(() => window.showMessage('网络错误', 'error'));
+      });
+    });
+
     document.querySelectorAll('.edit-btn').forEach(btn => {
       btn.addEventListener('click', function (e) {
         e.stopPropagation();
@@ -251,6 +284,8 @@
     document.getElementById('editBookmarkDesc').value = config.desc;
     document.getElementById('editBookmarkSortOrder').value = config.sort_order;
     document.getElementById('editBookmarkIsPrivate').checked = !!config.is_private;
+    const editStar = document.getElementById('editBookmarkIsStar');
+    if (editStar) editStar.checked = Number(config.is_star) === 1;
     window.createCascadingDropdown('editBookmarkCatelogWrapper', 'editBookmarkCatelog', window.categoriesTree, config.catelog_id);
 
     const editModal = document.getElementById('editBookmarkModal');

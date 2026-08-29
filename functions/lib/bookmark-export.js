@@ -136,7 +136,7 @@ export async function fetchBookmarkExport(env, options = {}) {
     const includePrivate = options.includePrivate === true;
 
     let categoryQuery = 'SELECT id, catelog, sort_order, parent_id, is_private FROM category';
-    let sitesQuery = 'SELECT id, name, url, logo, desc, catelog_id, sort_order, is_private FROM sites';
+    let sitesQuery = 'SELECT id, name, url, logo, desc, catelog_id, sort_order, is_private, is_star FROM sites';
 
     if (!includePrivate) {
         // 分类私密时导入/写入逻辑会把站点一并置为私密，因此这里按 is_private 过滤即可

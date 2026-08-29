@@ -39,7 +39,7 @@ export async function onRequestPut(context) {
     }
 
     const config = await request.json();
-    const { name, url, logo, desc, catelog_id, sort_order, is_private } = config;
+    const { name, url, logo, desc, catelog_id, sort_order, is_private, is_star } = config;
 
     const nameResult = normalizeBookmarkName(name);
     if (!nameResult.ok) return errorResponse(nameResult.message, 400);
@@ -60,6 +60,7 @@ export async function onRequestPut(context) {
     const sanitizedDesc = descResult.value;
     const sortOrderValue = normalizeSortOrder(sort_order);
     const isPrivateValue = is_private ? 1 : 0;
+    const isStarValue = is_star ? 1 : 0;
 
     if (!catelog_id) {
       return errorResponse('Catelog is required', 400);
@@ -95,9 +96,9 @@ export async function onRequestPut(context) {
 
     const update = await env.NAV_DB.prepare(`
       UPDATE sites
-      SET name = ?, url = ?, logo = ?, desc = ?, catelog_id = ?, catelog_name = ?, sort_order = ?, is_private = ?, update_time = CURRENT_TIMESTAMP
+      SET name = ?, url = ?, logo = ?, desc = ?, catelog_id = ?, catelog_name = ?, sort_order = ?, is_private = ?, is_star = ?, update_time = CURRENT_TIMESTAMP
       WHERE id = ?
-    `).bind(sanitizedName, sanitizedUrl, sanitizedLogo, sanitizedDesc, catelog_id, catelogName, sortOrderValue, finalIsPrivate, id).run();
+    `).bind(sanitizedName, sanitizedUrl, sanitizedLogo, sanitizedDesc, catelog_id, catelogName, sortOrderValue, finalIsPrivate, isStarValue, id).run();
 
     const dirtyScope = (existing.is_private === 1 && finalIsPrivate === 1) ? 'private' : 'all';
     await markHomeCacheDirty(env, dirtyScope);

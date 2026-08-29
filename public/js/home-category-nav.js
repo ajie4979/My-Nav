@@ -348,7 +348,7 @@
       let lastId = localStorage.getItem('iori_last_category');
 
       if (!lastId) {
-        const match = document.cookie.match(/iori_last_category=(all|\d+)/);
+        const match = document.cookie.match(/iori_last_category=(all|starred|\d+)/);
         if (match) {
           lastId = match[1];
         }

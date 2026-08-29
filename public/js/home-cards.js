@@ -55,6 +55,9 @@
     function getSitesForCatalog(catalogId) {
       const allSites = window.IORI_SITES || [];
       if (!catalogId) return allSites;
+      if (String(catalogId) === 'starred') {
+        return allSites.filter(site => Number(site.isStar) === 1);
+      }
       return allSites.filter(site => String(site.catelog_id) === String(catalogId));
     }
 

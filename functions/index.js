@@ -1,6 +1,6 @@
 // functions/index.js
 import { isAdminAuthenticated, getHomeCacheKey, clearHomeCacheDirty, markHomeCacheDirty, getHomeCacheDirtyValue } from './_middleware';
-import { FONT_MAP, HOME_CACHE_TTL } from './constants';
+import { FONT_MAP, HOME_CACHE_TTL, STARRED_CATALOG_ID, STARRED_CATALOG_NAME } from './constants';
 import { escapeHTML, sanitizeUrl, normalizeSortOrder, getStyleStr, sanitizeStyleColor } from './lib/utils';
 import { getSettingsKeys, parseSettings } from './lib/settings-parser';
 import { renderHorizontalMenu, renderVerticalMenu } from './lib/menu-renderer';
@@ -114,7 +114,7 @@ export async function onRequest(context) {
   const settingsKeys = getSettingsKeys();
   const settingsPlaceholders = settingsKeys.map(() => '?').join(',');
   // sort_order 仅用于 ORDER BY，不参与 SELECT（SQLite 允许）；前端不使用该字段
-  const sitesQuery = `SELECT id, name, url, logo, desc, catelog_id, catelog_name
+  const sitesQuery = `SELECT id, name, url, logo, desc, catelog_id, catelog_name, is_star
                       FROM sites WHERE (is_private = 0 OR ? = 1) ORDER BY sort_order ASC, create_time DESC`;
 
   // Settings 缓存：优先从 KV 读取，减少数据库查询
@@ -181,6 +181,7 @@ export async function onRequest(context) {
   function resolveCatalogId(catalogValue, options = {}) {
     const value = String(catalogValue || '').trim();
     if (!value || value.toLowerCase() === 'all') return null;
+    if (value === STARRED_CATALOG_ID) return STARRED_CATALOG_ID;
     if (/^\d+$/.test(value)) {
       const id = Number(value);
       if (categoryMap.has(id)) return id;
@@ -197,21 +198,32 @@ export async function onRequest(context) {
   if (!requestedCatalogValue) {
     const defaultCat = (S.home_default_category || '').trim();
     requestedCatalogId = resolveCatalogId(defaultCat, { allowName: true });
+    // 未配置默认分类时，若有加星书签，默认首屏只渲染“常用”（少量卡片，加快首屏）；一个星标都没有则保持全部
+    if (requestedCatalogId === null && allSites.some(site => Number(site.is_star) === 1)) {
+      requestedCatalogId = STARRED_CATALOG_ID;
+    }
   }
 
   let targetCategoryIds = [];
   let currentCatalogName = '';
   const catalogExists = requestedCatalogId !== null;
+  const isStarredCatalog = requestedCatalogId === STARRED_CATALOG_ID;
 
   if (catalogExists) {
-    const requestedCategory = categoryMap.get(requestedCatalogId);
-    currentCatalogName = requestedCategory.catelog;
-    targetCategoryIds.push(requestedCatalogId);
+    if (isStarredCatalog) {
+      currentCatalogName = STARRED_CATALOG_NAME;
+    } else {
+      const requestedCategory = categoryMap.get(requestedCatalogId);
+      currentCatalogName = requestedCategory.catelog;
+      targetCategoryIds.push(requestedCatalogId);
+    }
   }
 
-  const sites = targetCategoryIds.length > 0
-    ? allSites.filter(site => targetCategoryIds.includes(site.catelog_id))
-    : allSites;
+  const sites = isStarredCatalog
+    ? allSites.filter(site => Number(site.is_star) === 1)
+    : (targetCategoryIds.length > 0
+      ? allSites.filter(site => targetCategoryIds.includes(site.catelog_id))
+      : allSites);
 
   // === 7. 壁纸处理 ===
   // 自定义壁纸优先；留空时使用当前桌面卡片风格的默认壁纸
@@ -231,13 +243,33 @@ export async function onRequest(context) {
     <div class="menu-item-wrapper relative inline-block text-left">
       <a href="?catalog=all" class="nav-btn ${allLinkClass} ${allLinkActiveMarker}">全部</a>
     </div>`;
-  const horizontalCatalogMarkup = horizontalAllLink + renderHorizontalMenu(rootCategories, currentCatalogName);
-  const catalogLinkMarkup = renderVerticalMenu(rootCategories, currentCatalogName, isCustomWallpaper);
+  // “常用（加星）”虚拟分类入口：排在“全部”之后、真实分类之前
+  const starredLinkClass = isStarredCatalog ? 'active' : 'inactive';
+  const starredLinkMarker = isStarredCatalog ? 'nav-item-active' : '';
+  const horizontalStarredLink = `
+    <div class="menu-item-wrapper relative inline-block text-left">
+      <a href="?catalog=${STARRED_CATALOG_ID}" data-id="${STARRED_CATALOG_ID}" class="nav-btn ${starredLinkClass} ${starredLinkMarker}">⭐ ${STARRED_CATALOG_NAME}</a>
+    </div>`;
+  const verticalStarredClass = isStarredCatalog
+    ? 'bg-secondary-100 text-primary-700 dark:bg-gray-800 dark:text-primary-400'
+    : 'hover:bg-gray-100 text-gray-700 dark:text-gray-300 dark:hover:bg-gray-800';
+  const verticalStarredLink = `
+    <a href="?catalog=${STARRED_CATALOG_ID}" data-id="${STARRED_CATALOG_ID}" class="flex items-center px-3 py-2 rounded-lg w-full transition-colors duration-200 ${verticalStarredClass}" style="padding-left: 12px">
+      <svg class="h-5 w-5 mr-2 ${isStarredCatalog ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500'}" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27l5.18 3.04-1.37-5.88 4.56-3.95-6.02-.51L12 4.36 9.65 9.97l-6.02.51 4.56 3.95-1.37 5.88z"/></svg>
+      ${STARRED_CATALOG_NAME}
+    </a>`;
+  const horizontalCatalogMarkup = horizontalAllLink + horizontalStarredLink + renderHorizontalMenu(rootCategories, currentCatalogName);
+  const catalogLinkMarkup = verticalStarredLink + renderVerticalMenu(rootCategories, currentCatalogName, isCustomWallpaper);
 
   // === 10. 生成站点卡片 HTML ===
-  let sitesGridMarkup = sites.length > 0
-    ? renderSiteCards(sites, S, env.ICON_API)
-    : renderEmptyState(categories.length, S.home_hide_admin);
+  let sitesGridMarkup;
+  if (sites.length > 0) {
+    sitesGridMarkup = renderSiteCards(sites, S, env.ICON_API);
+  } else if (isStarredCatalog) {
+    sitesGridMarkup = '<div class="col-span-full text-center text-gray-500 dark:text-gray-400 py-10">还没有加星的常用书签，可在后台「书签管理」中点击星标，把常用站点加到这里</div>';
+  } else {
+    sitesGridMarkup = renderEmptyState(categories.length, S.home_hide_admin);
+  }
 
   // === 11. 计算 Grid 列数 ===
   const getMobileGridClass = (cols) => {

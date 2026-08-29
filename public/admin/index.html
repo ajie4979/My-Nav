@@ -384,6 +384,13 @@
               <span class="slider round"></span>
             </label>
           </div>
+          <div class="form-group flex items-center justify-between">
+            <label for="addBookmarkIsStar" class="cursor-pointer select-none text-gray-700 font-medium">设为常用(加星):</label>
+            <label class="switch">
+              <input type="checkbox" id="addBookmarkIsStar">
+              <span class="slider round"></span>
+            </label>
+          </div>
           <div class="flex flex-row justify-end gap-3 mt-6">
             <button type="button" id="cancelAddBookmarkBtn"
               class="w-24 h-10 m-0 flex items-center justify-center bg-gray-100 text-gray-600 rounded hover:bg-gray-200 text-sm font-medium transition-colors">取消</button>
@@ -438,6 +445,14 @@
               class="cursor-pointer select-none text-gray-700 font-medium">私密书签:</label>
             <label class="switch">
               <input type="checkbox" name="is_private" id="editBookmarkIsPrivate">
+              <span class="slider round"></span>
+            </label>
+          </div>
+          <div class="form-group flex items-center justify-between">
+            <label for="editBookmarkIsStar"
+              class="cursor-pointer select-none text-gray-700 font-medium">设为常用(加星):</label>
+            <label class="switch">
+              <input type="checkbox" name="is_star" id="editBookmarkIsStar">
               <span class="slider round"></span>
             </label>
           </div>
@@ -1706,13 +1721,13 @@
 
   <script src="/js/admin-shared.js?v=a337b552"></script>
   <script src="/js/admin-cache.js?v=ae06819c"></script>
-  <script src="/js/admin-bookmark-list.js?v=00f008ca"></script>
+  <script src="/js/admin-bookmark-list.js?v=251867f1"></script>
   <script src="/js/admin-pending.js?v=b6ae86b9"></script>
   <script src="/js/admin-tabs.js?v=3fe16a46"></script>
   <script src="/js/admin-bookmark-privacy.js?v=cb0fbe1c"></script>
   <script src="/js/admin.js?v=99dc278e"></script>
   <script src="/js/admin-categories.js?v=6ee07657"></script>
-  <script src="/js/admin-bookmarks.js?v=2c52bc54"></script>
+  <script src="/js/admin-bookmarks.js?v=d9f57592"></script>
   <script src="/js/admin-batch.js?v=231f596e"></script>
   <script src="/js/wallpaper-defaults.js?v=7eebee6d"></script>
   <script src="/js/admin-settings-defaults.js?v=ebdebc7d"></script>

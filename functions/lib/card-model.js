@@ -92,6 +92,7 @@ export function buildCardViewModel(site, iconAPI) {
   return {
     id: site?.id,
     catelog_id: site?.catelog_id,
+    isStar: Number(site?.is_star) || 0,
     nameHtml: escapeHTML(rawName),
     catalogHtml: escapeHTML(rawCatalog),
     descHtml: escapeHTML(rawDesc),
