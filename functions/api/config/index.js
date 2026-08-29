@@ -30,6 +30,9 @@ export async function onRequestGet(context) {
     if (catalogId) {
       queryBase += ` AND s.catelog_id = ?`;
       queryBindParams.push(catalogId);
+    } else if (catalog === 'starred') {
+      // “常用导航”虚拟分类：聚合所有加星书签
+      queryBase += ` AND s.is_star = 1`;
     } else if (catalog) {
       queryBase += ` AND s.catelog_name = ?`;
       queryBindParams.push(catalog);

@@ -129,6 +129,13 @@ async function runIncrementalMigrations(env) {
   } catch (error) {
     console.warn('Create idx_sites_star skipped:', error.message);
   }
+  // v10：示例分类「常用工具」更名为「在线工具」，同步 sites 冗余分类名
+  try {
+    await env.NAV_DB.prepare("UPDATE category SET catelog='在线工具' WHERE catelog='常用工具'").run();
+    await env.NAV_DB.prepare("UPDATE sites SET catelog_name='在线工具' WHERE catelog_name='常用工具'").run();
+  } catch (error) {
+    console.warn('Rename demo category skipped:', error.message);
+  }
 
   if (sitesMissingCatalogName) {
     await env.NAV_DB.prepare(`

@@ -26,9 +26,9 @@ export const PREVIOUS_SCHEMA_VERSION = 'v9';
 // 首页 HTML 缓存版本 - 修改此值会强制刷新首页缓存
 export const HOME_CACHE_VERSION = 'v41';
 
-// “常用（加星）”虚拟分类：不是 category 表中的真实分类，而是聚合 is_star=1 的书签
+// “常用导航（加星）”虚拟分类：不是 category 表中的真实分类，而是聚合 is_star=1 的书签
 export const STARRED_CATALOG_ID = 'starred';
-export const STARRED_CATALOG_NAME = '常用';
+export const STARRED_CATALOG_NAME = '常用导航';
 
 // 首页 HTML 缓存与 dirty 标记 TTL（30 天）
 export const HOME_CACHE_TTL = 2592000;

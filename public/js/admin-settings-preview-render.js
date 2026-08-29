@@ -228,13 +228,13 @@
     const settings = readPreviewSettings();
     const categoryTree = data.getPreviewCategoryTree();
     const categoryNames = data.flattenCategoryNames(categoryTree);
-    const defaultCategory = settings.defaultCategory && categoryNames.includes(settings.defaultCategory)
+    const defaultCategory = settings.defaultCategory && (settings.defaultCategory === 'starred' || categoryNames.includes(settings.defaultCategory))
       ? settings.defaultCategory
       : '';
     let activeCategory = defaultCategory;
 
     if (livePreviewSelectedCategory !== null) {
-      if (!livePreviewSelectedCategory || categoryNames.includes(livePreviewSelectedCategory)) {
+      if (!livePreviewSelectedCategory || livePreviewSelectedCategory === 'starred' || categoryNames.includes(livePreviewSelectedCategory)) {
         activeCategory = livePreviewSelectedCategory;
       } else {
         livePreviewSelectedCategory = null;
@@ -332,7 +332,8 @@
       const countText = previewState?.isLoaded
         ? `${previewState.total} 个书签`
         : '正在加载书签';
-      statsText.textContent = activeCategory ? `${activeCategory} · ${countText}` : `全部收藏 · ${countText}`;
+      const activeLabel = activeCategory === 'starred' ? '常用导航' : activeCategory;
+      statsText.textContent = activeCategory ? `${activeLabel} · ${countText}` : `全部收藏 · ${countText}`;
       statsText.style.display = settings.hideStats ? 'none' : '';
       shared.applyTextStyle(statsText, settings.statsFont, settings.statsSize, settings.statsColor);
     }

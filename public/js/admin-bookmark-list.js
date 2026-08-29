@@ -119,7 +119,7 @@
 
   function getStarIcon(config) {
     if (!Number(config.is_star)) return '';
-    return `<svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 ml-1 text-amber-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" title="常用书签"><path d="M12 17.27l5.18 3.04-1.37-5.88 4.56-3.95-6.02-.51L12 4.36 9.65 9.97l-6.02.51 4.56 3.95-1.37 5.88z"/></svg>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 ml-1 text-amber-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" title="常用导航书签"><path d="M12 17.27l5.18 3.04-1.37-5.88 4.56-3.95-6.02-.51L12 4.36 9.65 9.97l-6.02.51 4.56 3.95-1.37 5.88z"/></svg>`;
   }
   // 与前台一致的 favicon 自动获取服务（无 logo 时按域名生成）
   const ADMIN_ICON_API = 'https://faviconsnap.com/api/favicon?url=';
@@ -168,7 +168,7 @@
 
     card.innerHTML = `
       <div class="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity z-20">
-        <button class="star-btn p-1.5 rounded-full transition-colors shadow-sm ${Number(config.is_star) === 1 ? 'bg-amber-100 text-amber-500 hover:bg-amber-200' : 'bg-gray-50 text-gray-400 hover:bg-amber-100 hover:text-amber-500'}" title="${Number(config.is_star) === 1 ? '取消常用' : '设为常用'}" data-id="${config.id}">
+        <button class="star-btn p-1.5 rounded-full transition-colors shadow-sm ${Number(config.is_star) === 1 ? 'bg-amber-100 text-amber-500 hover:bg-amber-200' : 'bg-gray-50 text-gray-400 hover:bg-amber-100 hover:text-amber-500'}" title="${Number(config.is_star) === 1 ? '取消常用导航' : '设为常用导航'}" data-id="${config.id}">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27l5.18 3.04-1.37-5.88 4.56-3.95-6.02-.51L12 4.36 9.65 9.97l-6.02.51 4.56 3.95-1.37 5.88z"/></svg>
         </button>
         <button class="edit-btn p-1.5 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition-colors shadow-sm" title="编辑" data-id="${config.id}">
@@ -247,7 +247,7 @@
             }
             const target = allConfigs.find(c => c.id == id);
             if (target) target.is_star = data.is_star;
-            window.showMessage(data.is_star === 1 ? '已加入常用' : '已取消常用', 'success');
+            window.showMessage(data.is_star === 1 ? '已加入常用导航' : '已取消常用导航', 'success');
             // 用更新后的本地数据重绘当前页（不重新请求，避免回到第一页）
             renderConfig(allConfigs);
           })

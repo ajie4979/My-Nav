@@ -198,10 +198,7 @@ export async function onRequest(context) {
   if (!requestedCatalogValue) {
     const defaultCat = (S.home_default_category || '').trim();
     requestedCatalogId = resolveCatalogId(defaultCat, { allowName: true });
-    // 未配置默认分类时，若有加星书签，默认首屏只渲染“常用”（少量卡片，加快首屏）；一个星标都没有则保持全部
-    if (requestedCatalogId === null && allSites.some(site => Number(site.is_star) === 1)) {
-      requestedCatalogId = STARRED_CATALOG_ID;
-    }
+    // 默认首页严格以后台「默认分类」设置为准：空=全部，starred=常用导航，分类名/ID=对应分类
   }
 
   let targetCategoryIds = [];
@@ -243,7 +240,7 @@ export async function onRequest(context) {
     <div class="menu-item-wrapper relative inline-block text-left">
       <a href="?catalog=all" class="nav-btn ${allLinkClass} ${allLinkActiveMarker}">全部</a>
     </div>`;
-  // “常用（加星）”虚拟分类入口：排在“全部”之后、真实分类之前
+  // “常用导航（加星）”虚拟分类入口：排在“全部”之后、真实分类之前
   const starredLinkClass = isStarredCatalog ? 'active' : 'inactive';
   const starredLinkMarker = isStarredCatalog ? 'nav-item-active' : '';
   const horizontalStarredLink = `
@@ -266,7 +263,7 @@ export async function onRequest(context) {
   if (sites.length > 0) {
     sitesGridMarkup = renderSiteCards(sites, S, env.ICON_API);
   } else if (isStarredCatalog) {
-    sitesGridMarkup = '<div class="col-span-full text-center text-gray-500 dark:text-gray-400 py-10">还没有加星的常用书签，可在后台「书签管理」中点击星标，把常用站点加到这里</div>';
+    sitesGridMarkup = '<div class="col-span-full text-center text-gray-500 dark:text-gray-400 py-10">还没有加星的常用导航书签，可在后台「书签管理」中点击星标，把站点加到常用导航</div>';
   } else {
     sitesGridMarkup = renderEmptyState(categories.length, S.home_hide_admin);
   }
