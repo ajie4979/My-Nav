@@ -252,7 +252,7 @@ export async function onRequest(context) {
     : 'hover:bg-gray-100 text-gray-700 dark:text-gray-300 dark:hover:bg-gray-800';
   const verticalAllIconClass = allLinkActive
     ? 'text-primary-600 dark:text-primary-400'
-    : (isCustomWallpaper ? 'text-gray-600' : 'text-gray-400 dark:text-gray-500');
+    : 'text-gray-400 dark:text-gray-500';
   const verticalAllLink = `
     <a href="?catalog=all" class="flex items-center px-3 py-2 rounded-lg w-full transition-colors duration-200 ${verticalAllClass}" style="padding-left: 12px">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 ${verticalAllIconClass}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
