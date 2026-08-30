@@ -191,6 +191,21 @@
     menu.appendChild(rootItem);
   }
 
+  // “常用导航”（加星书签）虚拟筛选项：仅书签管理主筛选用，批量操作不显示
+  function appendStarredFilterItem(menu, input, trigger) {
+    const item = document.createElement('div');
+    item.className = 'custom-dropdown-item';
+    item.innerHTML = '<span class="font-medium text-amber-500 inline-flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27l5.18 3.04-1.37-5.88 4.56-3.95-6.02-.51L12 4.36 9.65 9.97l-6.02.51 4.56 3.95-1.37 5.88z"/></svg>常用导航</span>';
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      input.value = 'starred';
+      trigger.textContent = '常用导航';
+      menu.classList.remove('show');
+      input.dispatchEvent(new Event('change'));
+    });
+    menu.appendChild(item);
+  }
+
   function appendCategoryItems(menu, input, trigger, nodes, excludeId, isFilter, depth = 0) {
     nodes.forEach(node => {
       if (excludeId && node.id == excludeId) return;
@@ -243,6 +258,10 @@
 
     if (isFilter) {
       appendFilterAllItem(menu, input, trigger);
+      // 批量管理筛选(batchCategoryFilter)按真实分类批量操作，虚拟分类无意义，不加入口
+      if (inputId === 'categoryFilter') {
+        appendStarredFilterItem(menu, input, trigger);
+      }
     }
 
     appendCategoryItems(menu, input, trigger, categoriesTree, excludeId, isFilter);

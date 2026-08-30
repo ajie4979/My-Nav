@@ -75,7 +75,11 @@
     params.append('pageSize', pageSize);
 
     if (keyword) params.append('keyword', keyword);
-    if (catalogId) params.append('catalogId', catalogId);
+    if (catalogId) {
+      // “常用导航”是加星虚拟分类，走后端 catalog=starred（is_star=1）
+      if (catalogId === 'starred') params.append('catalog', 'starred');
+      else params.append('catalogId', catalogId);
+    }
 
     return params;
   }
@@ -281,6 +285,10 @@
             target.is_star = serverStar;
             applyStarUI(card, serverStar, false);
             window.showMessage(serverStar === 1 ? '已加入常用导航' : '已取消常用导航', 'success');
+            // 处于「常用导航」筛选时，加/取消星会改变列表成员，重新拉取当前筛选
+            if (currentCategoryFilter === 'starred') {
+              fetchConfigs(currentPage, currentSearchKeyword, 'starred');
+            }
           })
           .catch(() => {
             // 失败回滚到操作前状态
