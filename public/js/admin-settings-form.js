@@ -179,7 +179,7 @@
       }
     }
 
-    selectElement.innerHTML = '<option value="">默认 (全部)</option><option value="starred">常用导航（加星书签）</option>';
+    selectElement.innerHTML = '<option value="">默认 (全部)</option><option value="starred">常用导航</option>';
     const addOptions = (nodes, prefix = '') => {
       nodes.forEach(node => {
         const option = document.createElement('option');
