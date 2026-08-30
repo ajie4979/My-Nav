@@ -367,12 +367,14 @@ export async function onRequest(context) {
 
   // === 14.5 统计行紧凑布局 ===
   // 分类栏位于搜索框下方时，去掉 header 底部大留白，让统计行（标题+格言）紧贴分类栏，仅占一行
-  const headerExtraClass = categoryPosition === 'below_search' ? '!pb-0' : '';
+  const headerExtraClass = (categoryPosition === 'below_search' || categoryPosition === 'left') ? '!pb-0' : '';
+  // 左侧布局：header 内容内层底部留白同步归零，让统计行（标题+格言）紧贴搜索区
+  const verticalHeaderPadClass = categoryPosition === 'left' ? 'pt-8 pb-0' : 'py-8';
   const statsRowPyClass = shouldRenderStatsRow ? 'my-3' : 'hidden';
   const statsRowHiddenClass = shouldRenderStatsRow ? '' : 'hidden';
 
   const verticalHeaderContent = `
-    <div class="max-w-4xl mx-auto text-center relative z-10 ${themeClass} py-8">
+    <div class="max-w-4xl mx-auto text-center relative z-10 ${themeClass} ${verticalHeaderPadClass}">
       <div class="home-title-block mb-8">${horizontalTitleHtml}${horizontalSubtitleHtml}</div>
       <div class="home-search-shell relative max-w-xl mx-auto">
         ${searchEngineOptions}
