@@ -16,6 +16,12 @@
   }
 
  function getSidebarCategoryIcon(name) {
+    if (name === 'starred') {
+      return `
+        <svg xmlns="http://www.w3.org/2000/svg" class="live-sidebar-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+        </svg>`;
+    }
     if (name === '全部') {
       return `
         <svg xmlns="http://www.w3.org/2000/svg" class="live-sidebar-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -145,7 +151,12 @@
             <span class="live-sidebar-label">全部</span>
           </span>`
         : '';
-      container.innerHTML = `${allHtml}${nodes.map(node => renderSidebarCategoryItem(node, activeName, 0)).join('')}`;
+      const starredSidebarHtml = `
+          <span class="live-sidebar-item ${activeName === 'starred' ? 'active' : ''}" data-preview-category="starred" role="button" tabindex="0" style="--live-sidebar-indent: 0rem">
+            ${getSidebarCategoryIcon('starred')}
+            <span class="live-sidebar-label">常用导航</span>
+          </span>`;
+      container.innerHTML = `${allHtml}${starredSidebarHtml}${nodes.map(node => renderSidebarCategoryItem(node, activeName, 0)).join('')}`;
     } else {
       const allHtml = includeAll
         ? `
@@ -153,7 +164,11 @@
             <span class="live-category-button ${active === '全部' ? 'active' : ''}" data-preview-category="" role="button" tabindex="0">全部</span>
           </div>`
         : '';
-      container.innerHTML = `${allHtml}${nodes.map(node => renderHorizontalCategoryItem(node, activeName, 0)).join('')}`;
+      const starredHorizontalHtml = `
+          <div class="live-category-item is-root">
+            <span class="live-category-button ${activeName === 'starred' ? 'active' : ''}" data-preview-category="starred" role="button" tabindex="0">常用导航</span>
+          </div>`;
+      container.innerHTML = `${allHtml}${starredHorizontalHtml}${nodes.map(node => renderHorizontalCategoryItem(node, activeName, 0)).join('')}`;
     }
 
     if (options.flow === 'single_line') {
