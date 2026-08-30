@@ -247,16 +247,29 @@ export async function onRequest(context) {
     <div class="menu-item-wrapper relative inline-block text-left">
       <a href="?catalog=${STARRED_CATALOG_ID}" data-id="${STARRED_CATALOG_ID}" class="nav-btn ${starredLinkClass} ${starredLinkMarker}">${STARRED_CATALOG_NAME}</a>
     </div>`;
+  const verticalAllClass = allLinkActive
+    ? 'bg-secondary-100 text-primary-700 dark:bg-gray-800 dark:text-primary-400'
+    : 'hover:bg-gray-100 text-gray-700 dark:text-gray-300 dark:hover:bg-gray-800';
+  const verticalAllIconClass = allLinkActive
+    ? 'text-primary-600 dark:text-primary-400'
+    : (isCustomWallpaper ? 'text-gray-600' : 'text-gray-400 dark:text-gray-500');
+  const verticalAllLink = `
+    <a href="?catalog=all" class="flex items-center px-3 py-2 rounded-lg w-full transition-colors duration-200 ${verticalAllClass}" style="padding-left: 12px">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 ${verticalAllIconClass}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+      </svg>
+      全部
+    </a>`;
   const verticalStarredClass = isStarredCatalog
     ? 'bg-secondary-100 text-primary-700 dark:bg-gray-800 dark:text-primary-400'
     : 'hover:bg-gray-100 text-gray-700 dark:text-gray-300 dark:hover:bg-gray-800';
   const verticalStarredLink = `
     <a href="?catalog=${STARRED_CATALOG_ID}" data-id="${STARRED_CATALOG_ID}" class="flex items-center px-3 py-2 rounded-lg w-full transition-colors duration-200 ${verticalStarredClass}" style="padding-left: 12px">
-      <svg class="h-5 w-5 mr-2 ${isStarredCatalog ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500'}"><use href="#icon-folder"/></svg>
+      <svg class="h-5 w-5 mr-2 ${isStarredCatalog ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500'}" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27l5.18 3.04-1.37-5.88 4.56-3.95-6.02-.51L12 4.36 9.65 9.97l-6.02.51 4.56 3.95-1.37 5.88z"/></svg>
       ${STARRED_CATALOG_NAME}
     </a>`;
   const horizontalCatalogMarkup = horizontalAllLink + horizontalStarredLink + renderHorizontalMenu(rootCategories, currentCatalogName);
-  const catalogLinkMarkup = verticalStarredLink + renderVerticalMenu(rootCategories, currentCatalogName, isCustomWallpaper);
+  const catalogLinkMarkup = verticalAllLink + verticalStarredLink + renderVerticalMenu(rootCategories, currentCatalogName, isCustomWallpaper);
 
   // === 10. 生成站点卡片 HTML ===
   let sitesGridMarkup;
