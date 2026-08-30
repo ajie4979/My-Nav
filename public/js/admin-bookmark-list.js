@@ -121,6 +121,30 @@
     if (!Number(config.is_star)) return '';
     return `<svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 ml-1 text-amber-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" title="常用导航书签"><path d="M12 17.27l5.18 3.04-1.37-5.88 4.56-3.95-6.02-.51L12 4.36 9.65 9.97l-6.02.51 4.56 3.95-1.37 5.88z"/></svg>`;
   }
+  // 加星请求进行中的书签，防止连点重复提交
+  const starPending = new Set();
+  // 局部刷新单张卡片的加星视觉，不重绘整个列表（避免 favicon 重载与列表闪烁）
+  function applyStarUI(card, isStar, animate) {
+    if (!card) return;
+    const btn = card.querySelector('.star-btn');
+    if (btn) {
+      btn.classList.toggle('bg-amber-100', isStar === 1);
+      btn.classList.toggle('text-amber-500', isStar === 1);
+      btn.classList.toggle('hover:bg-amber-200', isStar === 1);
+      btn.classList.toggle('bg-gray-50', isStar !== 1);
+      btn.classList.toggle('text-gray-400', isStar !== 1);
+      btn.classList.toggle('hover:bg-amber-100', isStar !== 1);
+      btn.classList.toggle('hover:text-amber-500', isStar !== 1);
+      btn.title = isStar === 1 ? '取消常用导航' : '设为常用导航';
+      if (animate) {
+        btn.classList.remove('star-pop');
+        void btn.offsetWidth; // 强制 reflow，重启动画
+        btn.classList.add('star-pop');
+      }
+    }
+    const indicator = card.querySelector('.star-indicator');
+    if (indicator) indicator.innerHTML = isStar === 1 ? getStarIcon({ is_star: 1 }) : '';
+  }
   // 与前台一致的 favicon 自动获取服务（无 logo 时按域名生成）
   const ADMIN_ICON_API = 'https://faviconsnap.com/api/favicon?url=';
 
@@ -193,7 +217,7 @@
               <div class="flex items-center gap-1">
                 <h3 class="site-title truncate" title="${safeName}">${safeName}</h3>
                 ${privateIcon}
-                ${starIcon}
+                <span class="star-indicator inline-flex items-center">${starIcon}</span>
               </div>
               <span class="inline-flex items-center px-2 py-0.5 mt-1.5 rounded-md text-xs font-medium bg-gray-100 text-gray-600">
                 ${safeCatalog}
@@ -235,23 +259,36 @@
       btn.addEventListener('click', function (e) {
         e.stopPropagation();
         const id = this.dataset.id;
+        if (starPending.has(String(id))) return; // 请求进行中忽略连点
+        const target = allConfigs.find(c => c.id == id);
+        if (!target) return;
+        const card = this.closest('.site-card');
+        // 乐观更新：立即翻转本地状态与当前卡片视觉，不必等待网络往返
+        const prev = Number(target.is_star) === 1 ? 1 : 0;
+        const next = prev === 1 ? 0 : 1;
+        target.is_star = next;
+        applyStarUI(card, next, true);
+        starPending.add(String(id));
         fetch(`/api/config/${id}/star`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ is_star: next })
         })
           .then(res => res.json())
           .then(data => {
-            if (data.code !== 200) {
-              window.showMessage(data.message || '操作失败', 'error');
-              return;
-            }
-            const target = allConfigs.find(c => c.id == id);
-            if (target) target.is_star = data.is_star;
-            window.showMessage(data.is_star === 1 ? '已加入常用导航' : '已取消常用导航', 'success');
-            // 用更新后的本地数据重绘当前页（不重新请求，避免回到第一页）
-            renderConfig(allConfigs);
+            if (data.code !== 200) throw new Error(data.message || '操作失败');
+            const serverStar = Number(data.is_star) === 1 ? 1 : 0;
+            target.is_star = serverStar;
+            applyStarUI(card, serverStar, false);
+            window.showMessage(serverStar === 1 ? '已加入常用导航' : '已取消常用导航', 'success');
           })
-          .catch(() => window.showMessage('网络错误', 'error'));
+          .catch(() => {
+            // 失败回滚到操作前状态
+            target.is_star = prev;
+            applyStarUI(card, prev, false);
+            window.showMessage('网络错误，已恢复原状态', 'error');
+          })
+          .finally(() => starPending.delete(String(id)));
       });
     });
 

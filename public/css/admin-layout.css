@@ -275,3 +275,11 @@ th {
 tr:nth-child(even) {
   background-color: #f9f9f9;
 }
+
+/* 后台书签「加星」按钮点击时的轻微弹跳反馈 */
+@keyframes adminStarPop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+.star-pop { animation: adminStarPop 0.28s ease-out; }
