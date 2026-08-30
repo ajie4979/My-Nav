@@ -265,7 +265,7 @@ export async function onRequest(context) {
     : 'hover:bg-gray-100 text-gray-700 dark:text-gray-300 dark:hover:bg-gray-800';
   const verticalStarredLink = `
     <a href="?catalog=${STARRED_CATALOG_ID}" data-id="${STARRED_CATALOG_ID}" class="flex items-center px-3 py-2 rounded-lg w-full transition-colors duration-200 ${verticalStarredClass}" style="padding-left: 12px">
-      <svg class="h-5 w-5 mr-2 ${isStarredCatalog ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500'}" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27l5.18 3.04-1.37-5.88 4.56-3.95-6.02-.51L12 4.36 9.65 9.97l-6.02.51 4.56 3.95-1.37 5.88z"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 ${isStarredCatalog ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500'}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
       ${STARRED_CATALOG_NAME}
     </a>`;
   const horizontalCatalogMarkup = horizontalAllLink + horizontalStarredLink + renderHorizontalMenu(rootCategories, currentCatalogName);
