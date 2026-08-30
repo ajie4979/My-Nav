@@ -245,14 +245,14 @@ export async function onRequest(context) {
   const starredLinkMarker = isStarredCatalog ? 'nav-item-active' : '';
   const horizontalStarredLink = `
     <div class="menu-item-wrapper relative inline-block text-left">
-      <a href="?catalog=${STARRED_CATALOG_ID}" data-id="${STARRED_CATALOG_ID}" class="nav-btn ${starredLinkClass} ${starredLinkMarker}"><svg class="w-3.5 h-3.5 mr-1 text-amber-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.27l5.18 3.04-1.37-5.88 4.56-3.95-6.02-.51L12 4.36 9.65 9.97l-6.02.51 4.56 3.95-1.37 5.88z"/></svg>${STARRED_CATALOG_NAME}</a>
+      <a href="?catalog=${STARRED_CATALOG_ID}" data-id="${STARRED_CATALOG_ID}" class="nav-btn ${starredLinkClass} ${starredLinkMarker}">${STARRED_CATALOG_NAME}</a>
     </div>`;
   const verticalStarredClass = isStarredCatalog
     ? 'bg-secondary-100 text-primary-700 dark:bg-gray-800 dark:text-primary-400'
     : 'hover:bg-gray-100 text-gray-700 dark:text-gray-300 dark:hover:bg-gray-800';
   const verticalStarredLink = `
     <a href="?catalog=${STARRED_CATALOG_ID}" data-id="${STARRED_CATALOG_ID}" class="flex items-center px-3 py-2 rounded-lg w-full transition-colors duration-200 ${verticalStarredClass}" style="padding-left: 12px">
-      <svg class="h-5 w-5 mr-2 ${isStarredCatalog ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500'}" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27l5.18 3.04-1.37-5.88 4.56-3.95-6.02-.51L12 4.36 9.65 9.97l-6.02.51 4.56 3.95-1.37 5.88z"/></svg>
+      <svg class="h-5 w-5 mr-2 ${isStarredCatalog ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500'}"><use href="#icon-folder"/></svg>
       ${STARRED_CATALOG_NAME}
     </a>`;
   const horizontalCatalogMarkup = horizontalAllLink + horizontalStarredLink + renderHorizontalMenu(rootCategories, currentCatalogName);
