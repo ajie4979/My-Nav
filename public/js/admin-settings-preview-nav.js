@@ -166,7 +166,7 @@
         : '';
       const starredHorizontalHtml = `
           <div class="live-category-item is-root">
-            <span class="live-category-button ${activeName === 'starred' ? 'active' : ''}" data-preview-category="starred" role="button" tabindex="0">常用导航</span>
+            <span class="live-category-button ${activeName === 'starred' ? 'active' : ''}" data-preview-category="starred" role="button" tabindex="0"><svg class="w-3.5 h-3.5 text-amber-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.27l5.18 3.04-1.37-5.88 4.56-3.95-6.02-.51L12 4.36 9.65 9.97l-6.02.51 4.56 3.95-1.37 5.88z"/></svg>常用导航</span>
           </div>`;
       container.innerHTML = `${allHtml}${starredHorizontalHtml}${nodes.map(node => renderHorizontalCategoryItem(node, activeName, 0)).join('')}`;
     }
