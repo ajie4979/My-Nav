@@ -404,6 +404,8 @@ export async function onRequest(context) {
   let sidebarClass = '';
   let mainClass = 'lg:ml-64';
   let sidebarToggleClass = '';
+  // 左侧分类布局：桌面侧边栏默认收起（checkbox 默认勾选），省去每次刷新都要手动关闭
+  let sidebarDefaultChecked = isHorizontalCategoryLayout ? '' : 'checked';
   let mobileToggleVisibilityClass = 'lg:hidden';
   let adminIconHtml = '';
   const themeIconHtml = `
@@ -717,6 +719,7 @@ export async function onRequest(context) {
     'SIDEBAR_CLASS': sidebarClass,
     'MAIN_CLASS': mainClass,
     'SIDEBAR_TOGGLE_CLASS': sidebarToggleClass,
+  'SIDEBAR_DEFAULT_CHECKED': sidebarDefaultChecked,
   };
   html = html.replace(/\{\{(\w+)\}\}/g, (_, key) => replacements[key] ?? '');
   html = html.replace('grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6', gridClass);
