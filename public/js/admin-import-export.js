@@ -413,6 +413,10 @@ function showImportPreview(result) {
             <label for="importOverride" style="font-size: 0.9rem; color: #333; cursor: pointer; font-weight: 500;">覆盖已存在书签 (根据 URL 判断)</label>
             <label class="switch"><input type="checkbox" id="importOverride"><span class="slider round"></span></label>
         </div>
+        <div style="margin-top: 10px; display: flex; align-items: center; justify-content: space-between; padding: 10px; background: #f8f9fa; border-radius: 6px; border: 1px solid #e9ecef;">
+            <label for="importAsPrivate" style="font-size: 0.9rem; color: #333; cursor: pointer; font-weight: 500;">全部设为私密书签 (仅管理员可见，访客不可见)</label>
+            <label class="switch"><input type="checkbox" id="importAsPrivate"><span class="slider round"></span></label>
+        </div>
       </div>
       <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px;">
         <button id="cancelImport" class="px-5 py-2.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium">取消</button>
@@ -437,8 +441,9 @@ function showImportPreview(result) {
   document.getElementById('cancelImport').onclick = closePreview;
   document.getElementById('confirmImport').onclick = () => {
     const override = document.getElementById('importOverride').checked;
+    const asPrivate = document.getElementById('importAsPrivate').checked;
     closePreview();
-    performImport(result, override);
+    performImport(result, override, asPrivate);
   };
   previewModal.onclick = (e) => { 
       if (e.target === previewModal) closePreview(); 
@@ -446,12 +451,12 @@ function showImportPreview(result) {
 }
 
 // 执行导入
-function performImport(dataToImport, override = false) {
+function performImport(dataToImport, override = false, asPrivate = false) {
   showMessage('正在导入,请稍候...', 'info');
   fetch('/api/config/import', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...dataToImport, override: override })
+    body: JSON.stringify({ ...dataToImport, override: override, force_private: !!asPrivate })
   }).then(res => res.json())
     .then(data => {
       if (data.code === 201 || data.code === 200) {

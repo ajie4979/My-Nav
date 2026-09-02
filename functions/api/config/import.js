@@ -69,6 +69,8 @@ export async function onRequestPost(context) {
     let isNewFormat = false;
     // 获取 override 参数，默认 false
     const override = !!jsonData.override;
+    // 导入预览里的「全部设为私密书签」开关：为 true 时本次导入/覆盖的书签强制私密
+    const forcePrivate = !!jsonData.force_private;
 
     // Detect import format
     // Handle the wrapper payload if it exists (due to frontend change passing { ...data, override })
@@ -386,7 +388,7 @@ export async function onRequestPost(context) {
             : sortOrderValue;
         
         // Handle Privacy Logic
-        let finalIsPrivate = site.is_private ? 1 : 0;
+        let finalIsPrivate = (forcePrivate || site.is_private) ? 1 : 0;
         const finalIsStar = site.is_star ? 1 : 0;
         // Force private if category is private
         if (catIsPrivate === 1) {

@@ -637,3 +637,101 @@ test('import deduplicates non-root URLs with and without trailing slash', async 
   assert.equal(siteInsertCalls.length, 1);
   assert.equal(siteInsertCalls[0].params[1], 'https://toolbox.googleapps.com/apps/dig/');
 });
+
+function buildImportDb(runCalls, nextCategoryIdStart) {
+  let nextCategoryId = nextCategoryIdStart;
+  return {
+    prepare(sql) {
+      const createStatement = (params = []) => ({
+        async all() {
+          if (sql.includes('SELECT id, catelog, parent_id, is_private FROM category')) {
+            return { results: [] };
+          }
+          if (sql.includes('SELECT url FROM sites WHERE url IN')) {
+            return { results: [] };
+          }
+          throw new Error(`Unexpected all() SQL: ${sql} ${JSON.stringify(params)}`);
+        },
+        async run() {
+          runCalls.push({ sql, params });
+          if (sql.includes('INSERT INTO category')) {
+            return { success: true, meta: { last_row_id: nextCategoryId++ } };
+          }
+          return { success: true, meta: {} };
+        },
+      });
+      return {
+        bind(...params) {
+          return createStatement(params);
+        },
+        all: createStatement().all,
+        run: createStatement().run,
+      };
+    },
+    async batch(statements) {
+      for (const statement of statements) {
+        await statement.run();
+      }
+    },
+  };
+}
+
+test('import force_private marks every imported site private while leaving categories public', async () => {
+  const runCalls = [];
+  const request = new Request('https://example.com/api/config/import', {
+    method: 'POST',
+    headers: { Cookie: 'admin_session=token', 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      force_private: true,
+      category: [{ id: 1, catelog: '公开分类', parent_id: 0, is_private: 0 }],
+      sites: [{
+        name: '本来公开',
+        url: 'https://force.example',
+        catelog_id: 1,
+        is_private: 0,
+      }],
+    }),
+  });
+
+  const response = await onRequestPost({
+    request,
+    env: { NAV_AUTH: createKv({ session_token: '1' }), NAV_DB: buildImportDb(runCalls, 60) },
+  });
+  const body = await response.json();
+  const categoryInsert = runCalls.find(call => call.sql.includes('INSERT INTO category'));
+  const siteInsert = runCalls.find(call => call.sql.includes('INSERT INTO sites'));
+
+  assert.equal(response.status, 201, body.message);
+  assert.ok(categoryInsert);
+  assert.equal(categoryInsert.params[3], 0, 'force_private 不应改动分类本身的私密状态');
+  assert.ok(siteInsert);
+  assert.equal(siteInsert.params[7], 1, '勾选后书签 is_private 必须被强制为 1');
+});
+
+test('import without force_private keeps a public site public', async () => {
+  const runCalls = [];
+  const request = new Request('https://example.com/api/config/import', {
+    method: 'POST',
+    headers: { Cookie: 'admin_session=token', 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      category: [{ id: 1, catelog: '公开分类', parent_id: 0, is_private: 0 }],
+      sites: [{
+        name: '保持公开',
+        url: 'https://public.example',
+        catelog_id: 1,
+        is_private: 0,
+      }],
+    }),
+  });
+
+  const response = await onRequestPost({
+    request,
+    env: { NAV_AUTH: createKv({ session_token: '1' }), NAV_DB: buildImportDb(runCalls, 70) },
+  });
+  const body = await response.json();
+  const siteInsert = runCalls.find(call => call.sql.includes('INSERT INTO sites'));
+
+  assert.equal(response.status, 201, body.message);
+  assert.ok(siteInsert);
+  assert.equal(siteInsert.params[7], 0, '不勾选时公开书签仍应保持 is_private=0');
+});
