@@ -139,6 +139,8 @@ const exportIncludePrivate = document.getElementById('exportIncludePrivate');
 if (exportBtn) {
   exportBtn.addEventListener('click', () => {
     if (exportIncludePrivate) exportIncludePrivate.checked = false;
+    const defaultFormat = document.querySelector('input[name="exportFormat"][value="json"]');
+    if (defaultFormat) defaultFormat.checked = true;
     if (exportModal) exportModal.style.display = 'block';
   });
 }
@@ -154,7 +156,12 @@ if (exportModal) {
 if (confirmExportBtn) {
   confirmExportBtn.addEventListener('click', () => {
     const includePrivate = exportIncludePrivate ? exportIncludePrivate.checked : false;
-    const url = `/api/config/export?include_private=${includePrivate}`;
+    const formatEl = document.querySelector('input[name="exportFormat"]:checked');
+    const isHtml = formatEl ? formatEl.value === 'html' : false;
+    const url = isHtml
+      ? `/api/config/export-html?include_private=${includePrivate}`
+      : `/api/config/export?include_private=${includePrivate}`;
+    const fileName = isHtml ? 'bookmarks.html' : 'config.json';
     showMessage('正在生成导出文件...', 'info');
     fetch(url)
       .then(res => {
@@ -165,7 +172,7 @@ if (confirmExportBtn) {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'config.json';
+        a.download = fileName;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);

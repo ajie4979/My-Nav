@@ -104,6 +104,23 @@
               <span class="slider round"></span>
             </label>
           </div>
+          <p class="text-sm text-gray-600 mt-4 mb-2">导出格式：</p>
+          <div class="space-y-2">
+            <label class="flex items-start gap-3 p-3 bg-gray-50 rounded border border-gray-100 cursor-pointer">
+              <input type="radio" name="exportFormat" value="json" checked class="mt-1">
+              <span class="flex flex-col">
+                <span class="text-gray-700 font-medium text-sm">JSON 备份（config.json）</span>
+                <span class="text-gray-400 text-xs mt-1">用于本站恢复、迁移与 WebDAV 备份</span>
+              </span>
+            </label>
+            <label class="flex items-start gap-3 p-3 bg-gray-50 rounded border border-gray-100 cursor-pointer">
+              <input type="radio" name="exportFormat" value="html" class="mt-1">
+              <span class="flex flex-col">
+                <span class="text-gray-700 font-medium text-sm">Chrome 书签 HTML（bookmarks.html）</span>
+                <span class="text-gray-400 text-xs mt-1">可在 Chrome / Edge 等浏览器「书签管理器 → 导入书签」中使用</span>
+              </span>
+            </label>
+          </div>
         </div>
         <div class="flex justify-end gap-3 mt-4">
           <button id="cancelExportBtn"
